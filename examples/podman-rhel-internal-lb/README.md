@@ -4,10 +4,10 @@ This directory contains an example Terraform configuration for deploying this mo
 
 | Parameter                   | Value                 |
 |-----------------------------|-----------------------|
-| Operational Mode            | `active-active`       |
-| Container Runtime           | `podman`              |
-| Operating System            | `RHEL 9`              |
-| Load Balancer Type          | `Azure Load Balancer` |
-| Load Balancer Scheme        | `internal`            |
-| Log Forwarding Destination  | `log_analytics`       |
+| Operational mode            | `active-active`       |
+| Container runtime           | `podman`              |
+| Operating system            | `RHEL 9`              |
+| Load balancer type          | `Azure Load Balancer` |
+| Load balancer scheme        | `internal`            |
+| Log forwarding destination  | `log_analytics`       |
 

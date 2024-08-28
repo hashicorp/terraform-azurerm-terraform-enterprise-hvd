@@ -57,8 +57,8 @@ module "tfe" {
   vm_image_publisher  = var.vm_image_publisher
   vm_image_offer      = var.vm_image_offer
   vm_image_sku        = var.vm_image_sku
-  container_runtime   = var.container_runtime
   vm_sku              = var.vm_sku
+  container_runtime   = var.container_runtime
 
   # --- Database --- #
   tfe_database_password_keyvault_secret_name = var.tfe_database_password_keyvault_secret_name
@@ -68,9 +68,9 @@ module "tfe" {
   # --- Object storage --- #
   storage_account_ip_allow = var.storage_account_ip_allow
 
-  # --- Log forwarding --- #
+  # --- Log forwarding (optional) --- #
   tfe_log_forwarding_enabled      = var.tfe_log_forwarding_enabled
+  log_fwd_destination_type        = var.log_fwd_destination_type
   log_analytics_workspace_name    = var.log_analytics_workspace_name
   log_analytics_workspace_rg_name = var.log_analytics_workspace_rg_name
-  log_fwd_destination_type        = var.log_fwd_destination_type
 }

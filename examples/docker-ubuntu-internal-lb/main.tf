@@ -37,10 +37,6 @@ module "tfe" {
   tfe_fqdn      = var.tfe_fqdn
   tfe_image_tag = var.tfe_image_tag
 
-  # temp
-  tfe_hairpin_addressing = var.tfe_hairpin_addressing
-  
-
   # --- Networking --- #
   vnet_id         = var.vnet_id
   lb_subnet_id    = var.lb_subnet_id
@@ -67,8 +63,9 @@ module "tfe" {
   # --- Object storage --- #
   storage_account_ip_allow = var.storage_account_ip_allow
 
-  # --- Log forwarding --- #
+  # --- Log forwarding (optional) --- #
   tfe_log_forwarding_enabled      = var.tfe_log_forwarding_enabled
+  log_fwd_destination_type        = var.log_fwd_destination_type 
   log_analytics_workspace_name    = var.log_analytics_workspace_name
   log_analytics_workspace_rg_name = var.log_analytics_workspace_rg_name
 }

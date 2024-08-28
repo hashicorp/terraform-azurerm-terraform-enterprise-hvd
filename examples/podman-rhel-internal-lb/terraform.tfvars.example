@@ -20,13 +20,13 @@ tfe_encryption_password_keyvault_secret_id = "<https://tfe-encryption-password-k
 
 # --- TFE config settings --- #
 tfe_fqdn      = "<tfe.example.com>"
-tfe_image_tag = "<v202407-1>"
+tfe_image_tag = "<v202408-1>"
 
 # --- Networking --- #
 vnet_id         = "<tfe-vnet-id>"
 lb_subnet_id    = "<tfe-load-balancer-subnet-id>"
-lb_is_internal  = <true>
-lb_private_ip   = "<10.0.1.20>"
+lb_is_internal  = true
+lb_private_ip   = "<10.0.1.20>" # available IP address from `lb_subnet_id`
 vm_subnet_id    = "<tfe-vm-subnet-id>"
 db_subnet_id    = "<tfe-database-subnet-id>"
 redis_subnet_id = "<tfe-redis-subnet-id>"
@@ -42,7 +42,7 @@ vm_ssh_public_key   = "<ssh-rsa mytfevmsshpublickey== user@user-abcdef123456>"
 vm_image_publisher  = "<RedHat>"
 vm_image_offer      = "<RHEL>"
 vm_image_sku        = "<9_4>"
-container_runtime   = "<podman>"
+container_runtime   = "podman"
 
 # --- Database --- #
 tfe_database_password_keyvault_secret_name = "<tfe-database-password-secret-name>"
@@ -51,3 +51,9 @@ postgres_geo_redundant_backup_enabled      = <true>
 
 # --- Object storage --- #
 storage_account_ip_allow = ["<192.168.1.20>"] # client/workstation you are running Terraform from (no subnet mask)
+
+# --- Log forwarding (optional) --- #
+tfe_log_forwarding_enabled      = <true>
+log_fwd_destination_type        = "<log_analytics>"
+log_analytics_workspace_name    = "<tfeloganalyticsworkspacename>"
+log_analytics_workspace_rg_name = "<tfe-log-analytics-resource-group-name>" 
