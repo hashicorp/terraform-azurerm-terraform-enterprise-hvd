@@ -96,7 +96,7 @@ tfe_metrics_http_port  = 9090
 tfe_metrics_https_port = 9091
 ```
 
->📝 Note: ensure your have NSG/firwall rules in place to allow `TCP/9090` or `TCP/9091` ingress to your TFE VM subnet.
+>📝 Note: Ensure your have NSG/firwall rules in place to allow `TCP/9090` or `TCP/9091` ingress to your TFE VM subnet.
 
 ### Custom VM Image
 
@@ -138,4 +138,4 @@ vm_disk_encryption_set_name = <"my-disk-encryption-set-name">
 vm_disk_encryption_set_rg   = <"my-disk-encryption-set-resource-group-name">
 ```
 
->📝 Note: ensure that your Key Vault that contains the key for the Disk Encryption Set has an Access Policy that allows the following key permissions: `Get`, `WrapKey`, and `UnwrapKey`.
+>📝 Note: Ensure that your Key Vault that contains the key for the Disk Encryption Set has an Access Policy that allows the following key permissions: `Get`, `WrapKey`, and `UnwrapKey`.

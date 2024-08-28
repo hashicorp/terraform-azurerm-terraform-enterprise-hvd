@@ -12,7 +12,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 - Terraform CLI `>= 1.9` installed on clients/workstations that will be used to deploy TFE
 - General understanding of how to use Terraform (Community Edition)
 - General understanding of how to use Azure cloud
-- `git` CLI and Visual Studio Code editor installed on clients/workstations are strongly recommended
+- `git` CLI and Visual Studio Code editor installed on workstations are strongly recommended
 - Azure subscription that TFE will be deployed in with admin-like permissions to provision these [resources](#resources) in via Terraform CLI
 - Azure blob storage account for [AzureRM remote state backend](https://www.terraform.io/docs/language/settings/backends/azurerm.html) that will be used to manage the Terraform state of this TFE deployment (out-of-band from the TFE application) via Terraform CLI (Community Edition)
 
@@ -26,14 +26,15 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 - Database subnet ID with service delegation configured for `Microsoft.DBforPostgreSQL/flexibleServers` for join action (`Microsoft.Network/virtualNetworks/subnets/join/action`)
 - Redis cache subnet ID
 - Ability to create private endpoints on the database and redis cache subnets
+- Chosen fully qualified domain name (FQDN) for your TFE instance (_e.g._ `tfe.azure.example.com`)
 
 #### Network security group (NSG)/firewall rules
 
-- Allow `TCP/443` ingress from TFE client access, VCS, and CI/CD tool subnets to load balancer subnet (if TFE load balancer is to be _internal_) or VM subnet (if TFE load balancer is to be _external_)
-- Allow `TCP/443` ingress from load balancer subnet to VM subnet (if load balancer is _internal_)
-- Allow `TCP/5432` ingress from VM subnet to database subnet (for PostgreSQL traffic)
-- Allow `TCP/6380` ingress from VM subnet to Redis cache subnet (for Redis TLS traffic)
-- Allow `TCP/8201` between VMs on VM subnet (for Vault cluster communication between TFE nodes with `active-active` operational mode)
+- Allow `TCP/443` ingress to load balancer subnet (if TFE load balancer is to be _internal_) or VM subnet (if TFE load balancer is to be _external_) from CIDR ranges of TFE users/clients, your VCS, and other systems (such as CI/CD) that will need to access TFE 
+- (Optional) Allow `TCP/9091` (HTTPS) and/or `TCP/9090` (HTTP) ingress to VM subnet from monitoring/observability tool CIDR range (for scraping TFE metrics endpoints)
+- Allow `TCP/5432` ingress to database subnet from VM subnet (for PostgreSQL traffic)
+- Allow `TCP/6380` ingress to Redis cache subnetfrom VM subnet (for Redis TLS traffic)
+- Allow `TCP/8201` between VMs on VM subnet (for TFE embedded Vault internal cluster traffic between TFE nodes when `tfe_operational_mode` is `active-active`)
 
 ### TLS certificates
 
@@ -55,7 +56,7 @@ Azure Key Vault containing the following TFE _bootstrap_ secrets:
  - **TFE TLS private key** - base64-encoded string of private key file in PEM format
  - **TFE custom CA bundle** - base64-encoded string of custom CA bundle file in PEM format
  
- >📝 Note: See the [TFE TLS certificate rotation](./docs/tfe-cert-rotation.md) doc for instructions on how to base64-encode the certificates with proper formatting before storing them as Key Vault secrets.
+ >📝 Note: See the [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md) doc for instructions on how to base64-encode the certificates with proper formatting before storing them as Key Vault secrets.
 
 ### Compute
 
@@ -81,9 +82,9 @@ One of the following logging destinations for the TFE container logs:
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-2. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module inputs as you see fit.
+2. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](./docs/deployment-customizations.md) for more details).
 
-3. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your root Terraform configuration that will manage your TFE deployment. If you are not sure where to create this new directory, it is common for us to see users create an `environments/` directory at the root of this repo, and then a subdirectory for each TFE instance deployment, like so:
+3. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
    
     ```
     .
@@ -111,17 +112,29 @@ One of the following logging destinations for the TFE container logs:
 
 7. After your `terraform apply` finishes successfully, you can monitor the installation progress by connecting to your TFE VM shell (via SSH or other preferred method) and observing the cloud-init (custom_data) script logs:<br>
 
-   Higher-level logs:
-   ```sh
+   #### Connecting to Azure VM
+
+   ```shell
+   ssh -i /path/to/vm_ssh_private_key tfeadmin@<vm-private-ip>
+   ```
+
+   #### Viewing the logs
+   
+   View the higher-level logs:
+   
+   ```shell
    tail -f /var/log/tfe-cloud-init.log
    ```
 
-   Lower-level logs:
-   ```sh
+   View the lower-level logs:
+   
+   ```shell
    journalctl -xu cloud-final -f
    ```
 
    >📝 Note: the `-f` argument is to follow the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
+   
+   #### Successful install log message
 
    The log files should display the following message after the cloud-init (custom_data) script finishes successfully:
 
@@ -131,7 +144,7 @@ One of the following logging destinations for the TFE container logs:
 
 8. After the cloud-init (custom_data) script finishes successfully, while still connected to the TFE VM shell, you can check the health status of TFE:
    
-   ```sh
+   ```shell
    cd /etc/tfe
    sudo docker compose exec tfe tfe-health-check-status
    ```
@@ -142,13 +155,14 @@ One of the following logging destinations for the TFE container logs:
 
 Below are links to various docs related to the customization and management of your TFE deployment:
 
- - [Deployment customizations](./docs/deployment-customizations.md)
- - [TFE version upgrades](./docs/tfe-version-upgrades.md)
- - [TFE TLS certificate rotation](./docs/tfe-cert-rotation.md)
- - [TFE configuration settings](./docs/tfe-config-settings.md)
- - [Azure GovCloud deployment](./docs/govcloud-deployment.md)
+ - [Deployment Customizations](./docs/deployment-customizations.md)
+ - [TFE Version Upgrades](./docs/tfe-version-upgrades.md)
+ - [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md)
+ - [TFE Configuration Settings](./docs/tfe-config-settings.md)
+ - [Azure GovCloud Deployment](./docs/govcloud-deployment.md)
 
 ---
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
