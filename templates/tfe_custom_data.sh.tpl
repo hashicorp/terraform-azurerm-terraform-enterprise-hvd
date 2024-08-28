@@ -97,7 +97,7 @@ function install_podman {
   if command -v podman > /dev/null; then
     log "INFO" "Detected 'podman' is already installed. Skipping."
   else
-    if [[ "$OS_DISTRO" == "rhel" ]]; then
+    if [[ "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "centos" ]]; then
       log "INFO" "Installing Podman for RHEL $OS_MAJOR_VERSION."
       dnf update -y
       if [[ "$OS_MAJOR_VERSION" == "9" ]]; then
@@ -147,8 +147,9 @@ EOF
 }
 
 # https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration
-function generate_tfe_docker_compose {
+function generate_tfe_docker_compose_file {
   local TFE_SETTINGS_PATH="$1"
+  
   cat > $TFE_SETTINGS_PATH << EOF
 ---
 name: tfe
@@ -186,9 +187,12 @@ services:
       TFE_OBJECT_STORAGE_AZURE_ACCOUNT_NAME: ${tfe_object_storage_azure_account_name}
       TFE_OBJECT_STORAGE_AZURE_CONTAINER: ${tfe_object_storage_azure_container}
       TFE_OBJECT_STORAGE_AZURE_ENDPOINT: ${tfe_object_storage_azure_endpoint}
-      TFE_OBJECT_STORAGE_AZURE_ACCOUNT_KEY: ${tfe_object_storage_azure_account_key}
       TFE_OBJECT_STORAGE_AZURE_USE_MSI: ${tfe_object_storage_azure_use_msi}
+%{ if tfe_object_storage_azure_use_msi ~}
       TFE_OBJECT_STORAGE_AZURE_CLIENT_ID: ${tfe_object_storage_azure_client_id}
+%{ else ~}
+      TFE_OBJECT_STORAGE_AZURE_ACCOUNT_KEY: ${tfe_object_storage_azure_account_key}
+%{ endif ~}
       
 %{ if tfe_operational_mode == "active-active" ~}
       # Vault settings
@@ -217,13 +221,13 @@ services:
       TFE_METRICS_HTTPS_PORT: ${tfe_metrics_https_port}
 
       # Docker driver settings
+      TFE_RUN_PIPELINE_DOCKER_NETWORK: ${tfe_run_pipeline_docker_network}
 %{ if tfe_hairpin_addressing ~}
       # Prevent loopback with Layer 4 load balancer with hairpinning TFE agent traffic
       TFE_RUN_PIPELINE_DOCKER_EXTRA_HOSTS: ${tfe_hostname}:$VM_PRIVATE_IP
 %{ endif ~}
-      TFE_RUN_PIPELINE_DOCKER_NETWORK: ${tfe_run_pipeline_docker_network}
-      TFE_DISK_CACHE_PATH: ${tfe_disk_cache_path}
-      TFE_DISK_CACHE_VOLUME_NAME: ${tfe_disk_cache_volume_name}
+      TFE_DISK_CACHE_PATH: /var/cache/tfe-task-worker
+      TFE_DISK_CACHE_VOLUME_NAME: terraform-enterprise-cache
 
       # Network settings
       TFE_IACT_SUBNETS: ${tfe_iact_subnets}
@@ -269,21 +273,29 @@ services:
         target: /var/cache/tfe-task-worker/terraform
 volumes:
   terraform-enterprise-cache:
+    name: terraform-enterprise-cache
 EOF
 }
 
 # https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration
-function generate_tfe_podman_spec {
+function generate_tfe_podman_manifest {
   local TFE_SETTINGS_PATH="$1"
+  
   cat > $TFE_SETTINGS_PATH << EOF
 ---
 apiVersion: "v1"
 kind: "Pod"
 metadata:
   labels:
-    app: "terraform-enterprise"
-  name: "terraform-enterprise"
+    app: "tfe"
+  name: "tfe"
 spec:
+%{ if tfe_hairpin_addressing ~}
+  hostAliases:
+    - ip: $VM_PRIVATE_IP
+      hostnames:
+        - "${tfe_hostname}"
+%{ endif ~}
   containers:
   - env:
     # Application settings
@@ -339,12 +351,15 @@ spec:
       value: ${tfe_object_storage_azure_container}
     - name: "TFE_OBJECT_STORAGE_AZURE_ENDPOINT"
       value: ${tfe_object_storage_azure_endpoint}
-    - name: "TFE_OBJECT_STORAGE_AZURE_ACCOUNT_KEY"
-      value: ${tfe_object_storage_azure_account_key}
     - name: "TFE_OBJECT_STORAGE_AZURE_USE_MSI"
       value: ${tfe_object_storage_azure_use_msi}
+%{ if tfe_object_storage_azure_use_msi ~}
     - name: "TFE_OBJECT_STORAGE_AZURE_CLIENT_ID"
       value: ${tfe_object_storage_azure_client_id}
+%{ else ~}
+    - name: "TFE_OBJECT_STORAGE_AZURE_ACCOUNT_KEY"
+      value: ${tfe_object_storage_azure_account_key}
+%{ endif ~}
 
 %{ if tfe_operational_mode == "active-active" ~}
     # Redis settings
@@ -377,13 +392,15 @@ spec:
       value: ${tfe_tls_version}
 
     # Observability settings
-%{ if tfe_log_forwarding_enabled ~}
     - name: "TFE_LOG_FORWARDING_ENABLED"
       value: ${tfe_log_forwarding_enabled}
+%{ if tfe_log_forwarding_enabled ~}
     - name: "TFE_LOG_FORWARDING_CONFIG_PATH"
       value: $TFE_LOG_FORWARDING_CONFIG_PATH
+%{ endif ~}
     - name: "TFE_METRICS_ENABLE"
       value: ${tfe_metrics_enable}
+%{ if tfe_metrics_enable ~}
     - name: "TFE_METRICS_HTTP_PORT"
       value: ${tfe_metrics_http_port}
     - name: "TFE_METRICS_HTTPS_PORT"
@@ -392,17 +409,16 @@ spec:
 
     # Docker driver settings
 %{ if tfe_hairpin_addressing ~}
-      # Prevent loopback with Layer 4 load balancer with hairpinning TFE agent traffic
+    # Prevent loopback with Layer 4 load balancer with hairpinning TFE agent traffic
     - name: "TFE_RUN_PIPELINE_DOCKER_EXTRA_HOSTS"
       value: ${tfe_hostname}:$VM_PRIVATE_IP
 %{ endif ~}
-
     - name: "TFE_RUN_PIPELINE_DOCKER_NETWORK"
       value: ${tfe_run_pipeline_docker_network}
     - name: "TFE_DISK_CACHE_PATH"
-      value: ${tfe_disk_cache_path}
+      value: /var/cache/tfe-task-worker
     - name: "TFE_DISK_CACHE_VOLUME_NAME"
-      value: ${tfe_disk_cache_volume_name}/terraform
+      value: terraform-enterprise-cache
     
     # Network settings
     - name: "TFE_IACT_SUBNETS"
@@ -431,7 +447,7 @@ spec:
         type: "spc_t"
     volumeMounts:
 %{ if tfe_log_forwarding_enabled ~}
-    - mountPath: "/etc/fluent-bit/fluent-bit.conf"
+    - mountPath: "$TFE_LOG_FORWARDING_CONFIG_PATH"
       name: "fluent-bit"
 %{ endif ~}
     - mountPath: "/etc/ssl/private/terraform-enterprise"
@@ -445,7 +461,7 @@ spec:
     - mountPath: "/run/docker.sock"
       name: "docker-sock"
     - mountPath: "/var/cache/tfe-task-worker/terraform"
-      name: "terraform-enterprise_terraform-enterprise-cache-pvc"
+      name: "terraform-enterprise-cache"
   restartPolicy: "Never"
   volumes:
 %{ if tfe_log_forwarding_enabled ~}
@@ -471,16 +487,16 @@ spec:
       path: "/var/run/docker.sock"
       type: "File"
     name: "docker-sock"
-  - name: "terraform-enterprise_terraform-enterprise-cache-pvc"
+  - name: "terraform-enterprise-cache"
     persistentVolumeClaim:
-      claimName: "terraform-enterprise_terraform-enterprise-cache"
+      claimName: "terraform-enterprise-cache"
 EOF
 }
 
 function generate_tfe_podman_quadlet {
   cat > $TFE_CONFIG_DIR/tfe.kube << EOF
 [Unit]
-Description=Terraform Enterprise Kubernetes Deployment
+Description=Terraform Enterprise Podman deployment.
 
 [Install]
 WantedBy=default.target
@@ -494,6 +510,8 @@ EOF
 }
 
 function pull_tfe_image {
+  local TFE_CONTAINER_RUNTIME="$1"
+  
   log "INFO" "Authenticating to '${tfe_image_repository_url}' container registry."
   log "INFO" "Detected TFE image repository username is '${tfe_image_repository_username}'."
   if [[ "${tfe_image_repository_url}" == "images.releases.hashicorp.com" ]]; then
@@ -503,7 +521,7 @@ function pull_tfe_image {
     log "INFO" "Setting TFE_IMAGE_REPOSITORY_PASSWORD to value of 'tfe_image_repository_password' module input."
     TFE_IMAGE_REPOSITORY_PASSWORD=${tfe_image_repository_password}
   fi
-  if [[ "${container_runtime}" == "podman" ]]; then
+  if [[ "$TFE_CONTAINER_RUNTIME" == "podman" ]]; then
     podman login --username ${tfe_image_repository_username} ${tfe_image_repository_url} --password $TFE_IMAGE_REPOSITORY_PASSWORD
     log "INFO" "Pulling TFE container image '${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}' down locally."
     podman pull ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
@@ -538,7 +556,7 @@ function main {
   log "INFO" "Creating TFE directories."
   mkdir -p $TFE_CONFIG_DIR $TFE_TLS_CERTS_DIR
 
-  log "INFO" "Installing software dependencies."
+  log "INFO" "Installing software dependencies..."
   install_azcli "$OS_DISTRO" "$OS_MAJOR_VERSION"
   if [[ "${container_runtime}" == "podman" ]]; then
     install_podman "$OS_DISTRO" "$OS_MAJOR_VERSION"
@@ -561,45 +579,40 @@ function main {
   log "INFO" "Running 'az login --identity'."
   az login --identity
 
-  log "INFO" "Retrieving TFE license file from Key Vault."
+  log "INFO" "Retrieving TFE license file from Key Vault..."
   retrieve_license_from_key_vault
 
-  log "INFO" "Retrieving TFE TLS certificates from Key Vault."
+  log "INFO" "Retrieving TFE TLS certificates from Key Vault..."
   retrieve_certs_from_key_vault
 
-  log "INFO" "Retrieving 'TFE_ENCRYPTION_PASSWORD' secret from Key Vault."
+  log "INFO" "Retrieving 'TFE_ENCRYPTION_PASSWORD' from Key Vault secret ${tfe_encryption_password_keyvault_secret_id}..."
   TFE_ENCRYPTION_PASSWORD=$(retrieve_secret_from_key_vault "${tfe_encryption_password_keyvault_secret_id}")
 
   if [[ "${tfe_log_forwarding_enabled}" == "true" ]]; then
-    log "INFO" "Generating '$TFE_LOG_FORWARDING_CONFIG_PATH' file for log forwarding via Fluent Bit."
+    log "INFO" "Generating '$TFE_LOG_FORWARDING_CONFIG_PATH' file for TFE log forwarding via Fluent Bit."
     configure_log_forwarding
   fi
 
   if [[ "${container_runtime}" == "podman" ]]; then
     TFE_SETTINGS_PATH="$TFE_CONFIG_DIR/tfe-pod.yaml"
-    log "INFO" "Generating '$TFE_SETTINGS_PATH/tfe-pod.yaml' file."
-    generate_tfe_podman_spec "$TFE_SETTINGS_PATH"
-  else
-    TFE_SETTINGS_PATH="$TFE_CONFIG_DIR/docker-compose.yaml"
-    log "INFO" "Generating '$TFE_SETTINGS_PATH/docker-compose.yaml' file."
-    generate_tfe_docker_compose "$TFE_SETTINGS_PATH"
-  fi
-
-  log "INFO" "Preparing to download TFE container image."
-  pull_tfe_image
-
-  cd $TFE_CONFIG_DIR
-  if [[ "${container_runtime}" == "podman" ]]; then
-    log "INFO" "Configuring systemd service via Quadlet to manage TFE Podman containers."
+    log "INFO" "Generating '$TFE_SETTINGS_PATH' Kubernetes pod manifest for TFE on Podman."
+    generate_tfe_podman_manifest "$TFE_SETTINGS_PATH"
+    log "INFO" "Preparing to download TFE container image..."
+    pull_tfe_image "${container_runtime}"
+    log "INFO" "Configuring systemd service using Quadlet to manage TFE Podman containers."
     generate_tfe_podman_quadlet
     cp "$TFE_SETTINGS_PATH" "/etc/containers/systemd"
     cp "$TFE_CONFIG_DIR/tfe.kube" "/etc/containers/systemd"
-    log "INFO" "Starting TFE service."
+    log "INFO" "Starting 'tfe' service (Podman containers)."
     systemctl daemon-reload
     systemctl start tfe.service
-    #podman play kube tfe-pod.yaml
   else
-    log "INFO" "Starting TFE application via Docker Compose."
+    TFE_SETTINGS_PATH="$TFE_CONFIG_DIR/docker-compose.yaml"
+    log "INFO" "Generating '$TFE_SETTINGS_PATH' file for TFE on Docker."
+    generate_tfe_docker_compose_file "$TFE_SETTINGS_PATH"
+    log "INFO" "Preparing to download TFE container image..."
+    pull_tfe_image "${container_runtime}"
+    log "INFO" "Starting TFE application using Docker Compose."
     if command -v docker-compose > /dev/null; then
       docker-compose --file $TFE_SETTINGS_PATH up --detach
     else
@@ -607,7 +620,7 @@ function main {
     fi
   fi
 
-  log "INFO" "Sleeping for a minute while TFE initializes."
+  log "INFO" "Sleeping for a minute while TFE initializes..."
   sleep 60
 
   log "INFO" "Polling TFE health check endpoint until the app becomes ready..."
