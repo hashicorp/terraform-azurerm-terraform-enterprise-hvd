@@ -2,7 +2,7 @@
 
 Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraform Enterprise (TFE) on Microsoft Azure using Azure Virtual Machines with a container runtime. This module defaults to deploying TFE in the `active-active` [operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes), but `external` is also supported. Docker and Podman are the supported container runtimes.
 
-![TFE on Azure](docs/images/tfe_on_azure.png)
+![TFE on Azure](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/images/tfe_on_azure.png)
 
 ## Prerequisites
 
