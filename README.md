@@ -155,11 +155,11 @@ One of the following logging destinations for the TFE container logs:
 
 Below are links to various docs related to the customization and management of your TFE deployment:
 
- - [Deployment Customizations](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/deployment-customizations.md)
- - [TFE Version Upgrades](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/tfe-version-upgrades.md)
- - [TFE TLS Certificate Rotation](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/tfe-cert-rotation.md)
- - [TFE Configuration Settings](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/tfe-config-settings.md)
- - [Azure GovCloud Deployment](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/govcloud-deployment.md)
+ - [Deployment Customizations](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/deployment-customizations.md)
+ - [TFE Version Upgrades](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/tfe-version-upgrades.md)
+ - [TFE TLS Certificate Rotation](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/tfe-cert-rotation.md)
+ - [TFE Configuration Settings](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/tfe-config-settings.md)
+ - [Azure GovCloud Deployment](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/govcloud-deployment.md)
 
 ---
 
