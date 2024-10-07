@@ -56,7 +56,7 @@ Azure Key Vault containing the following TFE _bootstrap_ secrets:
  - **TFE TLS private key** - base64-encoded string of private key file in PEM format
  - **TFE custom CA bundle** - base64-encoded string of custom CA bundle file in PEM format
 
- >📝 Note: See the [TFE TLS Certificate Rotation](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/tfe-cert-rotation.md) doc for instructions on how to base64-encode the certificates with proper formatting before storing them as Key Vault secrets.
+ >📝 Note: See the [TFE TLS Certificate Rotation](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/tfe-cert-rotation.md) doc for instructions on how to base64-encode the certificates with proper formatting before storing them as Key Vault secrets.
 
 ### Compute
 
