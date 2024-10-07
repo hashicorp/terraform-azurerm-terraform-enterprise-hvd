@@ -30,7 +30,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 #### Network security group (NSG)/firewall rules
 
-- Allow `TCP/443` ingress to load balancer subnet (if TFE load balancer is to be _internal_) or VM subnet (if TFE load balancer is to be _external_) from CIDR ranges of TFE users/clients, your VCS, and other systems (such as CI/CD) that will need to access TFE 
+- Allow `TCP/443` ingress to load balancer subnet (if TFE load balancer is to be _internal_) or VM subnet (if TFE load balancer is to be _external_) from CIDR ranges of TFE users/clients, your VCS, and other systems (such as CI/CD) that will need to access TFE
 - (Optional) Allow `TCP/9091` (HTTPS) and/or `TCP/9090` (HTTP) ingress to VM subnet from monitoring/observability tool CIDR range (for scraping TFE metrics endpoints)
 - Allow `TCP/5432` ingress to database subnet from VM subnet (for PostgreSQL traffic)
 - Allow `TCP/6380` ingress to Redis cache subnetfrom VM subnet (for Redis TLS traffic)
@@ -55,8 +55,8 @@ Azure Key Vault containing the following TFE _bootstrap_ secrets:
  - **TFE TLS certificate** - base64-encoded string of certificate file in PEM format
  - **TFE TLS private key** - base64-encoded string of private key file in PEM format
  - **TFE custom CA bundle** - base64-encoded string of custom CA bundle file in PEM format
- 
- >📝 Note: See the [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md) doc for instructions on how to base64-encode the certificates with proper formatting before storing them as Key Vault secrets.
+
+ >📝 Note: See the [TFE TLS Certificate Rotation](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/tfe-cert-rotation.md) doc for instructions on how to base64-encode the certificates with proper formatting before storing them as Key Vault secrets.
 
 ### Compute
 
@@ -82,10 +82,10 @@ One of the following logging destinations for the TFE container logs:
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-2. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](./docs/deployment-customizations.md) for more details).
+2. Nested within the [examples](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/deployment-customizations.md) for more details).
 
 3. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
-   
+
     ```
     .
     └── environments
@@ -106,7 +106,7 @@ One of the following logging destinations for the TFE container logs:
 
 4. (Optional) Uncomment and update the [AzureRM Remote State backend](https://www.terraform.io/docs/language/settings/backends/azurerm.html) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended so that your state file managing your TFE deployment is not stored on your local disk and others can safely collaborate, it is technically not required to use a remote backend config for your TFE deployment.
 
-5. Populate your own custom values into the `terraform.tfvars.example` file that was provided (in particular, the values enclosed in the `<>` characters). Then, remove the `.example` file extension such that the file is now named `terraform.tfvars`. If you would like to further customize your deployment beyond what is in your chosen example scenario, see the [deployment customizations](./docs/deployment-customizations.md) doc for more details on common customizations.
+5. Populate your own custom values into the `terraform.tfvars.example` file that was provided (in particular, the values enclosed in the `<>` characters). Then, remove the `.example` file extension such that the file is now named `terraform.tfvars`. If you would like to further customize your deployment beyond what is in your chosen example scenario, see the [deployment customizations](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/deployment-customizations.md) doc for more details on common customizations.
 
 6. Navigate to the directory of your newly created Terraform configuration for your TFE deployment, and run `terraform init`, `terraform plan`, and `terraform apply`.
 
@@ -119,21 +119,21 @@ One of the following logging destinations for the TFE container logs:
    ```
 
    #### Viewing the logs
-   
+
    View the higher-level logs:
-   
+
    ```shell
    tail -f /var/log/tfe-cloud-init.log
    ```
 
    View the lower-level logs:
-   
+
    ```shell
    journalctl -xu cloud-final -f
    ```
 
    >📝 Note: the `-f` argument is to follow the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
-   
+
    #### Successful install log message
 
    The log files should display the following message after the cloud-init (custom_data) script finishes successfully:
@@ -143,7 +143,7 @@ One of the following logging destinations for the TFE container logs:
    ```
 
 8. After the cloud-init (custom_data) script finishes successfully, while still connected to the TFE VM shell, you can check the health status of TFE:
-   
+
    ```shell
    cd /etc/tfe
    sudo docker compose exec tfe tfe-health-check-status
@@ -155,11 +155,11 @@ One of the following logging destinations for the TFE container logs:
 
 Below are links to various docs related to the customization and management of your TFE deployment:
 
- - [Deployment Customizations](./docs/deployment-customizations.md)
- - [TFE Version Upgrades](./docs/tfe-version-upgrades.md)
- - [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md)
- - [TFE Configuration Settings](./docs/tfe-config-settings.md)
- - [Azure GovCloud Deployment](./docs/govcloud-deployment.md)
+ - [Deployment Customizations](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/deployment-customizations.md)
+ - [TFE Version Upgrades](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/tfe-version-upgrades.md)
+ - [TFE TLS Certificate Rotation](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/tfe-cert-rotation.md)
+ - [TFE Configuration Settings](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/tfe-config-settings.md)
+ - [Azure GovCloud Deployment](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/govcloud-deployment.md)
 
 ---
 
