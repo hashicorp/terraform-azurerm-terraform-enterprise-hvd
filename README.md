@@ -49,12 +49,12 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 Azure Key Vault containing the following TFE _bootstrap_ secrets:
 
- - **TFE license** - raw contents of TFE license file (i.e. the string value of `cat terraform.hclic`)
- - **TFE encryption password** - used for TFE's embedded Vault; randomly generate this yourself, this is kept completely internal to the TFE system
- - **TFE database password** - used to create PostgreSQL Flexible Server; randomly generate this yourself (avoid the `$` character as Azure PostgreSQL Flexible Server does not like it), fetched from within the module via data source and applied to the PostgreSQL Flexible Server resource
- - **TFE TLS certificate** - base64-encoded string of certificate file in PEM format
- - **TFE TLS private key** - base64-encoded string of private key file in PEM format
- - **TFE custom CA bundle** - base64-encoded string of custom CA bundle file in PEM format
+- **TFE license** - raw contents of TFE license file (i.e. the string value of `cat terraform.hclic`)
+- **TFE encryption password** - used for TFE's embedded Vault; randomly generate this yourself, this is kept completely internal to the TFE system
+- **TFE database password** - used to create PostgreSQL Flexible Server; randomly generate this yourself (avoid the `$` character as Azure PostgreSQL Flexible Server does not like it), fetched from within the module via data source and applied to the PostgreSQL Flexible Server resource
+- **TFE TLS certificate** - base64-encoded string of certificate file in PEM format
+- **TFE TLS private key** - base64-encoded string of private key file in PEM format
+- **TFE custom CA bundle** - base64-encoded string of custom CA bundle file in PEM format
 
  >📝 Note: See the [TFE TLS Certificate Rotation](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/tfe-cert-rotation.md) doc for instructions on how to base64-encode the certificates with proper formatting before storing them as Key Vault secrets.
 
@@ -73,10 +73,9 @@ Azure Key Vault containing the following TFE _bootstrap_ secrets:
 ### Log Forwarding (optional)
 
 One of the following logging destinations for the TFE container logs:
- - Azure Log Analytics Workspace
- - A custom Fluent Bit configuration to forward logs to a custom destination
 
----
+- Azure Log Analytics Workspace
+- A custom Fluent Bit configuration to forward logs to a custom destination
 
 ## Usage
 
@@ -86,7 +85,7 @@ One of the following logging destinations for the TFE container logs:
 
 3. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
 
-    ```
+    ```pre
     .
     └── environments
         ├── production
@@ -102,6 +101,7 @@ One of the following logging destinations for the TFE container logs:
             ├── terraform.tfvars
             └── variables.tf
     ```
+
     >📝 Note: In this example, the user will have two separate TFE deployments; one for their `sandbox` environment, and one for their `production` environment. This is recommended, but not required.
 
 4. (Optional) Uncomment and update the [AzureRM Remote State backend](https://www.terraform.io/docs/language/settings/backends/azurerm.html) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended so that your state file managing your TFE deployment is not stored on your local disk and others can safely collaborate, it is technically not required to use a remote backend config for your TFE deployment.
@@ -112,13 +112,13 @@ One of the following logging destinations for the TFE container logs:
 
 7. After your `terraform apply` finishes successfully, you can monitor the installation progress by connecting to your TFE VM shell (via SSH or other preferred method) and observing the cloud-init (custom_data) script logs:<br>
 
-   #### Connecting to Azure VM
+   **Connecting to the Azure VM**
 
    ```shell
    ssh -i /path/to/vm_ssh_private_key tfeadmin@<vm-private-ip>
    ```
 
-   #### Viewing the logs
+   **Viewing the logs**
 
    View the higher-level logs:
 
@@ -134,11 +134,11 @@ One of the following logging destinations for the TFE container logs:
 
    >📝 Note: the `-f` argument is to follow the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
 
-   #### Successful install log message
+   **Successful install log message**
 
    The log files should display the following message after the cloud-init (custom_data) script finishes successfully:
 
-   ```
+   ```shell
    [INFO] TFE custom_data script finished successfully!
    ```
 
@@ -149,19 +149,26 @@ One of the following logging destinations for the TFE container logs:
    sudo docker compose exec tfe tfe-health-check-status
    ```
 
-9.  Follow the steps to [here](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user) to create the TFE initial admin user.
+9. Follow the steps to [here](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user) to create the TFE initial admin user.
 
 ## Docs
 
 Below are links to various docs related to the customization and management of your TFE deployment:
 
- - [Deployment Customizations](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/deployment-customizations.md)
- - [TFE Version Upgrades](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/tfe-version-upgrades.md)
- - [TFE TLS Certificate Rotation](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/tfe-cert-rotation.md)
- - [TFE Configuration Settings](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/tfe-config-settings.md)
- - [Azure GovCloud Deployment](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/govcloud-deployment.md)
+- [Deployment Customizations](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/deployment-customizations.md)
+- [TFE Version Upgrades](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/tfe-version-upgrades.md)
+- [TFE TLS Certificate Rotation](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/tfe-cert-rotation.md)
+- [TFE Configuration Settings](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/tfe-config-settings.md)
+- [Azure GovCloud Deployment](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/tree/main/docs/govcloud-deployment.md)
 
----
+## Module support
+
+This open source software is maintained by the HashiCorp Technical Field Organization, independently of our enterprise products. While our Support Engineering team provides dedicated support for our enterprise offerings, this open source software is not included.
+
+- For help using this open source software, please engage your account team.
+- To report bugs/issues with this open source software, please open them directly against this code repository using the GitHub issues feature.
+
+Please note that there is no official Service Level Agreement (SLA) for support of this software as a HashiCorp customer. This software falls under the definition of Community Software/Versions in your Agreement. We appreciate your understanding and collaboration in improving our open source projects.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -231,22 +238,9 @@ Below are links to various docs related to the customization and management of y
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | List of Azure availability zones to spread TFE resources across. | `set(string)` | <pre>[<br/>  "1",<br/>  "2",<br/>  "3"<br/>]</pre> | no |
 | <a name="input_bootstrap_keyvault_name"></a> [bootstrap\_keyvault\_name](#input\_bootstrap\_keyvault\_name) | Name of the 'bootstrap' Key Vault to use for bootstrapping TFE deployment. | `string` | n/a | yes |
 | <a name="input_bootstrap_keyvault_rg_name"></a> [bootstrap\_keyvault\_rg\_name](#input\_bootstrap\_keyvault\_rg\_name) | Name of the Resource Group where the 'bootstrap' Key Vault resides. | `string` | n/a | yes |
-| <a name="input_db_subnet_id"></a> [db\_subnet\_id](#input\_db\_subnet\_id) | Subnet ID for PostgreSQL database. | `string` | n/a | yes |
-| <a name="input_friendly_name_prefix"></a> [friendly\_name\_prefix](#input\_friendly\_name\_prefix) | Friendly name prefix used for uniquely naming all Azure resources for this deployment. Most commonly set to either an environment (e.g. 'sandbox', 'prod'), a team name, or a project name. | `string` | n/a | yes |
-| <a name="input_location"></a> [location](#input\_location) | Azure region for this TFE deployment. | `string` | n/a | yes |
-| <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name) | Name of resource group for this TFE deployment. Must be an existing resource group if `create_resource_group` is `false`. | `string` | n/a | yes |
-| <a name="input_tfe_database_password_keyvault_secret_name"></a> [tfe\_database\_password\_keyvault\_secret\_name](#input\_tfe\_database\_password\_keyvault\_secret\_name) | Name of the secret in the Key Vault that contains the TFE database password. | `string` | n/a | yes |
-| <a name="input_tfe_encryption_password_keyvault_secret_id"></a> [tfe\_encryption\_password\_keyvault\_secret\_id](#input\_tfe\_encryption\_password\_keyvault\_secret\_id) | ID of Key Vault secret containing TFE encryption password. | `string` | n/a | yes |
-| <a name="input_tfe_fqdn"></a> [tfe\_fqdn](#input\_tfe\_fqdn) | Fully qualified domain name of TFE instance. This name should resolve to the load balancer IP address and will be what clients use to access TFE. | `string` | n/a | yes |
-| <a name="input_tfe_license_keyvault_secret_id"></a> [tfe\_license\_keyvault\_secret\_id](#input\_tfe\_license\_keyvault\_secret\_id) | ID of Key Vault secret containing TFE license. | `string` | n/a | yes |
-| <a name="input_tfe_tls_ca_bundle_keyvault_secret_id"></a> [tfe\_tls\_ca\_bundle\_keyvault\_secret\_id](#input\_tfe\_tls\_ca\_bundle\_keyvault\_secret\_id) | ID of Key Vault secret containing TFE TLS custom CA bundle. | `string` | n/a | yes |
-| <a name="input_tfe_tls_cert_keyvault_secret_id"></a> [tfe\_tls\_cert\_keyvault\_secret\_id](#input\_tfe\_tls\_cert\_keyvault\_secret\_id) | ID of Key Vault secret containing TFE TLS certificate. | `string` | n/a | yes |
-| <a name="input_tfe_tls_privkey_keyvault_secret_id"></a> [tfe\_tls\_privkey\_keyvault\_secret\_id](#input\_tfe\_tls\_privkey\_keyvault\_secret\_id) | ID of Key Vault secret containing TFE TLS private key. | `string` | n/a | yes |
-| <a name="input_vm_subnet_id"></a> [vm\_subnet\_id](#input\_vm\_subnet\_id) | Subnet ID for Virtual Machine Scaleset (VMSS). | `string` | n/a | yes |
-| <a name="input_vnet_id"></a> [vnet\_id](#input\_vnet\_id) | ID of VNet where TFE will be deployed. | `string` | n/a | yes |
-| <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | List of Azure availability zones to spread TFE resources across. | `set(string)` | <pre>[<br>  "1",<br>  "2",<br>  "3"<br>]</pre> | no |
 | <a name="input_common_tags"></a> [common\_tags](#input\_common\_tags) | Map of common tags for taggable Azure resources. | `map(string)` | `{}` | no |
 | <a name="input_container_runtime"></a> [container\_runtime](#input\_container\_runtime) | Container runtime to use for TFE. Valid values are 'docker' or 'podman'. | `string` | `"docker"` | no |
 | <a name="input_create_blob_storage_private_endpoint"></a> [create\_blob\_storage\_private\_endpoint](#input\_create\_blob\_storage\_private\_endpoint) | Boolean to create a private endpoint and private DNS zone for TFE Storage Account. | `bool` | `true` | no |
@@ -257,12 +251,15 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_create_tfe_private_dns_record"></a> [create\_tfe\_private\_dns\_record](#input\_create\_tfe\_private\_dns\_record) | Boolean to create a DNS record for TFE in a private Azure DNS zone. A `private_dns_zone_name` must also be provided when `true`. | `bool` | `false` | no |
 | <a name="input_create_tfe_public_dns_record"></a> [create\_tfe\_public\_dns\_record](#input\_create\_tfe\_public\_dns\_record) | Boolean to create a DNS record for TFE in a public Azure DNS zone. A `public_dns_zone_name` must also be provided when `true`. | `bool` | `false` | no |
 | <a name="input_custom_fluent_bit_config"></a> [custom\_fluent\_bit\_config](#input\_custom\_fluent\_bit\_config) | Custom Fluent Bit configuration for log forwarding. Only valid if `log_fwd_destination_type` is `custom`. | `string` | `null` | no |
+| <a name="input_db_subnet_id"></a> [db\_subnet\_id](#input\_db\_subnet\_id) | Subnet ID for PostgreSQL database. | `string` | n/a | yes |
 | <a name="input_docker_version"></a> [docker\_version](#input\_docker\_version) | Version of Docker to install on TFE VMSS. | `string` | `"24.0.9"` | no |
+| <a name="input_friendly_name_prefix"></a> [friendly\_name\_prefix](#input\_friendly\_name\_prefix) | Friendly name prefix used for uniquely naming all Azure resources for this deployment. Most commonly set to either an environment (e.g. 'sandbox', 'prod'), a team name, or a project name. | `string` | n/a | yes |
 | <a name="input_is_govcloud_region"></a> [is\_govcloud\_region](#input\_is\_govcloud\_region) | Boolean indicating whether this TFE deployment is in an Azure Government Cloud region. | `bool` | `false` | no |
 | <a name="input_is_secondary_region"></a> [is\_secondary\_region](#input\_is\_secondary\_region) | Boolean indicating whether this TFE deployment is for 'primary' region or 'secondary' region. | `bool` | `false` | no |
 | <a name="input_lb_is_internal"></a> [lb\_is\_internal](#input\_lb\_is\_internal) | Boolean to create an internal or external Azure Load Balancer for TFE. | `bool` | `true` | no |
 | <a name="input_lb_private_ip"></a> [lb\_private\_ip](#input\_lb\_private\_ip) | Private IP address for internal Azure Load Balancer. Only valid when `lb_is_internal` is `true`. | `string` | `null` | no |
 | <a name="input_lb_subnet_id"></a> [lb\_subnet\_id](#input\_lb\_subnet\_id) | Subnet ID for Azure load balancer. | `string` | `null` | no |
+| <a name="input_location"></a> [location](#input\_location) | Azure region for this TFE deployment. | `string` | n/a | yes |
 | <a name="input_log_analytics_workspace_name"></a> [log\_analytics\_workspace\_name](#input\_log\_analytics\_workspace\_name) | Name existing Azure Log Analytics Workspace for log forwarding destination. Only valid if `log_fwd_destination_type` is `log_analytics`. | `string` | `null` | no |
 | <a name="input_log_analytics_workspace_rg_name"></a> [log\_analytics\_workspace\_rg\_name](#input\_log\_analytics\_workspace\_rg\_name) | Name of Resource Group where Log Analytics Workspace exists. | `string` | `null` | no |
 | <a name="input_log_fwd_destination_type"></a> [log\_fwd\_destination\_type](#input\_log\_fwd\_destination\_type) | Type of log forwarding destination. Valid values are 'log\_analytics' or 'custom'. | `string` | `"log_analytics"` | no |
@@ -275,7 +272,7 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_postgres_geo_backup_keyvault_key_id"></a> [postgres\_geo\_backup\_keyvault\_key\_id](#input\_postgres\_geo\_backup\_keyvault\_key\_id) | ID of the Key Vault key to use for customer-managed key (CMK) encryption of PostgreSQL Flexible Server geo-redundant backups. This key must be in the same region as the geo-redundant backup. | `string` | `null` | no |
 | <a name="input_postgres_geo_backup_user_assigned_identity_id"></a> [postgres\_geo\_backup\_user\_assigned\_identity\_id](#input\_postgres\_geo\_backup\_user\_assigned\_identity\_id) | ID of the User-Assigned Identity to use for customer-managed key (CMK) encryption of PostgreSQL Flexible Server geo-redundant backups. This identity must have 'Get', 'WrapKey', and 'UnwrapKey' permissions to the Key Vault. | `string` | `null` | no |
 | <a name="input_postgres_geo_redundant_backup_enabled"></a> [postgres\_geo\_redundant\_backup\_enabled](#input\_postgres\_geo\_redundant\_backup\_enabled) | Boolean to enable PostreSQL geo-redundant backup configuration in paired Azure region. | `bool` | `true` | no |
-| <a name="input_postgres_maintenance_window"></a> [postgres\_maintenance\_window](#input\_postgres\_maintenance\_window) | Map of maintenance window settings for PostgreSQL Flexible Server. | `map(number)` | <pre>{<br>  "day_of_week": 0,<br>  "start_hour": 0,<br>  "start_minute": 0<br>}</pre> | no |
+| <a name="input_postgres_maintenance_window"></a> [postgres\_maintenance\_window](#input\_postgres\_maintenance\_window) | Map of maintenance window settings for PostgreSQL Flexible Server. | `map(number)` | <pre>{<br/>  "day_of_week": 0,<br/>  "start_hour": 0,<br/>  "start_minute": 0<br/>}</pre> | no |
 | <a name="input_postgres_primary_availability_zone"></a> [postgres\_primary\_availability\_zone](#input\_postgres\_primary\_availability\_zone) | Number for the availability zone for the primary PostgreSQL Flexible Server instance to reside in. | `number` | `1` | no |
 | <a name="input_postgres_secondary_availability_zone"></a> [postgres\_secondary\_availability\_zone](#input\_postgres\_secondary\_availability\_zone) | Number for the availability zone for the standby PostgreSQL Flexible Server instance to reside in. | `number` | `2` | no |
 | <a name="input_postgres_sku"></a> [postgres\_sku](#input\_postgres\_sku) | PostgreSQL database SKU. | `string` | `"GP_Standard_D4ds_v4"` | no |
@@ -293,6 +290,7 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_redis_sku_name"></a> [redis\_sku\_name](#input\_redis\_sku\_name) | Which SKU of Redis to use. Options are 'Basic', 'Standard', or 'Premium'. | `string` | `"Premium"` | no |
 | <a name="input_redis_subnet_id"></a> [redis\_subnet\_id](#input\_redis\_subnet\_id) | Subnet ID for Redis cache. | `string` | `null` | no |
 | <a name="input_redis_version"></a> [redis\_version](#input\_redis\_version) | Redis cache version. Only the major version is needed. | `number` | `6` | no |
+| <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name) | Name of resource group for this TFE deployment. Must be an existing resource group if `create_resource_group` is `false`. | `string` | n/a | yes |
 | <a name="input_secondary_vm_subnet_id"></a> [secondary\_vm\_subnet\_id](#input\_secondary\_vm\_subnet\_id) | VM subnet ID of existing TFE virtual machine scaleset (VMSS) in secondary region. Used to allow TFE VMs in secondary region access to TFE storage account in primary region. | `string` | `null` | no |
 | <a name="input_storage_account_blob_change_feed_enabled"></a> [storage\_account\_blob\_change\_feed\_enabled](#input\_storage\_account\_blob\_change\_feed\_enabled) | Boolean to enable blob change feed for the TFE Storage Account. | `bool` | `false` | no |
 | <a name="input_storage_account_blob_versioning_enabled"></a> [storage\_account\_blob\_versioning\_enabled](#input\_storage\_account\_blob\_versioning\_enabled) | Boolean to enable blob versioning for the TFE Storage Account. | `bool` | `false` | no |
@@ -306,12 +304,16 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_tfe_capacity_memory"></a> [tfe\_capacity\_memory](#input\_tfe\_capacity\_memory) | Amount of memory in MB for TFE. | `number` | `2048` | no |
 | <a name="input_tfe_database_name"></a> [tfe\_database\_name](#input\_tfe\_database\_name) | PostgreSQL database name for TFE. | `string` | `"tfe"` | no |
 | <a name="input_tfe_database_paramaters"></a> [tfe\_database\_paramaters](#input\_tfe\_database\_paramaters) | PostgreSQL server parameters for the connection URI. Used to configure the PostgreSQL connection. | `string` | `"sslmode=require"` | no |
+| <a name="input_tfe_database_password_keyvault_secret_name"></a> [tfe\_database\_password\_keyvault\_secret\_name](#input\_tfe\_database\_password\_keyvault\_secret\_name) | Name of the secret in the Key Vault that contains the TFE database password. | `string` | n/a | yes |
+| <a name="input_tfe_encryption_password_keyvault_secret_id"></a> [tfe\_encryption\_password\_keyvault\_secret\_id](#input\_tfe\_encryption\_password\_keyvault\_secret\_id) | ID of Key Vault secret containing TFE encryption password. | `string` | n/a | yes |
+| <a name="input_tfe_fqdn"></a> [tfe\_fqdn](#input\_tfe\_fqdn) | Fully qualified domain name of TFE instance. This name should resolve to the load balancer IP address and will be what clients use to access TFE. | `string` | n/a | yes |
 | <a name="input_tfe_hairpin_addressing"></a> [tfe\_hairpin\_addressing](#input\_tfe\_hairpin\_addressing) | Boolean to enable hairpin addressing for layer 4 load balancer with loopback prevention. Must be `true` when `lb_is_internal` is `true`. | `bool` | `true` | no |
 | <a name="input_tfe_image_name"></a> [tfe\_image\_name](#input\_tfe\_image\_name) | Name of the TFE container image. Only change this if you are hosting the TFE container image in your own custom repository. | `string` | `"hashicorp/terraform-enterprise"` | no |
 | <a name="input_tfe_image_repository_password"></a> [tfe\_image\_repository\_password](#input\_tfe\_image\_repository\_password) | Pasword for container registry where TFE container image is hosted. Only set this if you are hosting the TFE container image in your own custom repository. | `string` | `null` | no |
 | <a name="input_tfe_image_repository_url"></a> [tfe\_image\_repository\_url](#input\_tfe\_image\_repository\_url) | Repository for the TFE image. Only change this if you are hosting the TFE container image in your own custom repository. | `string` | `"images.releases.hashicorp.com"` | no |
 | <a name="input_tfe_image_repository_username"></a> [tfe\_image\_repository\_username](#input\_tfe\_image\_repository\_username) | Username for container registry where TFE container image is hosted. Only change this if you are hosting the TFE container image in your own custom repository. | `string` | `"terraform"` | no |
 | <a name="input_tfe_image_tag"></a> [tfe\_image\_tag](#input\_tfe\_image\_tag) | Tag for the TFE container image. This represents the version of TFE to deploy. | `string` | `"v202407-1"` | no |
+| <a name="input_tfe_license_keyvault_secret_id"></a> [tfe\_license\_keyvault\_secret\_id](#input\_tfe\_license\_keyvault\_secret\_id) | ID of Key Vault secret containing TFE license. | `string` | n/a | yes |
 | <a name="input_tfe_license_reporting_opt_out"></a> [tfe\_license\_reporting\_opt\_out](#input\_tfe\_license\_reporting\_opt\_out) | Boolean to opt out of license reporting. | `bool` | `false` | no |
 | <a name="input_tfe_log_forwarding_enabled"></a> [tfe\_log\_forwarding\_enabled](#input\_tfe\_log\_forwarding\_enabled) | Boolean to enable TFE log forwarding feature. | `bool` | `false` | no |
 | <a name="input_tfe_metrics_enable"></a> [tfe\_metrics\_enable](#input\_tfe\_metrics\_enable) | Boolean to enable metrics. | `bool` | `false` | no |
@@ -326,7 +328,10 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_tfe_redis_use_tls"></a> [tfe\_redis\_use\_tls](#input\_tfe\_redis\_use\_tls) | Boolean to enable TLS for the Redis cache. | `bool` | `true` | no |
 | <a name="input_tfe_run_pipeline_docker_network"></a> [tfe\_run\_pipeline\_docker\_network](#input\_tfe\_run\_pipeline\_docker\_network) | Docker network where the containers that execute Terraform runs will be created. The network must already exist, it will not be created automatically. Leave as `null` to use the default network. | `string` | `null` | no |
 | <a name="input_tfe_run_pipeline_image"></a> [tfe\_run\_pipeline\_image](#input\_tfe\_run\_pipeline\_image) | Name of the Docker image to use for the run pipeline driver. | `string` | `null` | no |
+| <a name="input_tfe_tls_ca_bundle_keyvault_secret_id"></a> [tfe\_tls\_ca\_bundle\_keyvault\_secret\_id](#input\_tfe\_tls\_ca\_bundle\_keyvault\_secret\_id) | ID of Key Vault secret containing TFE TLS custom CA bundle. | `string` | n/a | yes |
+| <a name="input_tfe_tls_cert_keyvault_secret_id"></a> [tfe\_tls\_cert\_keyvault\_secret\_id](#input\_tfe\_tls\_cert\_keyvault\_secret\_id) | ID of Key Vault secret containing TFE TLS certificate. | `string` | n/a | yes |
 | <a name="input_tfe_tls_enforce"></a> [tfe\_tls\_enforce](#input\_tfe\_tls\_enforce) | Boolean to enforce TLS, Strict-Transport-Security headers, and secure cookies within TFE. | `bool` | `false` | no |
+| <a name="input_tfe_tls_privkey_keyvault_secret_id"></a> [tfe\_tls\_privkey\_keyvault\_secret\_id](#input\_tfe\_tls\_privkey\_keyvault\_secret\_id) | ID of Key Vault secret containing TFE TLS private key. | `string` | n/a | yes |
 | <a name="input_tfe_vault_disable_mlock"></a> [tfe\_vault\_disable\_mlock](#input\_tfe\_vault\_disable\_mlock) | Boolean to disable mlock for internal Vault. | `bool` | `false` | no |
 | <a name="input_vm_admin_username"></a> [vm\_admin\_username](#input\_vm\_admin\_username) | Admin username for VMs in VMSS. | `string` | `"tfeadmin"` | no |
 | <a name="input_vm_custom_image_name"></a> [vm\_custom\_image\_name](#input\_vm\_custom\_image\_name) | Name of custom VM image to use for VMSS. If not using a custom image, leave this blank. | `string` | `null` | no |
@@ -340,7 +345,9 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_vm_image_version"></a> [vm\_image\_version](#input\_vm\_image\_version) | Version of the VM image. | `string` | `"latest"` | no |
 | <a name="input_vm_sku"></a> [vm\_sku](#input\_vm\_sku) | SKU for VM size for the VMSS. | `string` | `"Standard_D4s_v4"` | no |
 | <a name="input_vm_ssh_public_key"></a> [vm\_ssh\_public\_key](#input\_vm\_ssh\_public\_key) | SSH public key for VMs in VMSS. | `string` | `null` | no |
+| <a name="input_vm_subnet_id"></a> [vm\_subnet\_id](#input\_vm\_subnet\_id) | Subnet ID for Virtual Machine Scaleset (VMSS). | `string` | n/a | yes |
 | <a name="input_vmss_instance_count"></a> [vmss\_instance\_count](#input\_vmss\_instance\_count) | Number of VM instances to run in the Virtual Machine Scaleset (VMSS). | `number` | `1` | no |
+| <a name="input_vnet_id"></a> [vnet\_id](#input\_vnet\_id) | ID of VNet where TFE will be deployed. | `string` | n/a | yes |
 
 ## Outputs
 
