@@ -2,7 +2,7 @@
 
 Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraform Enterprise (TFE) on Microsoft Azure using Azure Virtual Machines with a container runtime. This module defaults to deploying TFE in the `active-active` [operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes), but `external` is also supported. Docker and Podman are the supported container runtimes.
 
-![TFE on Azure](https://raw.githubusercontent.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/main/docs/images/tfe_on_azure.png)
+![TFE architecture](https://developer.hashicorp.com/.extracted/hvd/img/terraform/solution-design-guides/tfe/architecture-logical-active-active.png)
 
 ## Prerequisites
 
@@ -30,7 +30,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 #### Network security group (NSG)/firewall rules
 
-- Allow `TCP/443` ingress to load balancer subnet (if TFE load balancer is to be _internal_) or VM subnet (if TFE load balancer is to be _external_) from CIDR ranges of TFE users/clients, your VCS, and other systems (such as CI/CD) that will need to access TFE 
+- Allow `TCP/443` ingress to load balancer subnet (if TFE load balancer is to be _internal_) or VM subnet (if TFE load balancer is to be _external_) from CIDR ranges of TFE users/clients, your VCS, and other systems (such as CI/CD) that will need to access TFE
 - (Optional) Allow `TCP/9091` (HTTPS) and/or `TCP/9090` (HTTP) ingress to VM subnet from monitoring/observability tool CIDR range (for scraping TFE metrics endpoints)
 - Allow `TCP/5432` ingress to database subnet from VM subnet (for PostgreSQL traffic)
 - Allow `TCP/6380` ingress to Redis cache subnetfrom VM subnet (for Redis TLS traffic)
@@ -49,13 +49,13 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 Azure Key Vault containing the following TFE _bootstrap_ secrets:
 
- - **TFE license** - raw contents of TFE license file (i.e. the string value of `cat terraform.hclic`)
- - **TFE encryption password** - used for TFE's embedded Vault; randomly generate this yourself, this is kept completely internal to the TFE system
- - **TFE database password** - used to create PostgreSQL Flexible Server; randomly generate this yourself (avoid the `$` character as Azure PostgreSQL Flexible Server does not like it), fetched from within the module via data source and applied to the PostgreSQL Flexible Server resource
- - **TFE TLS certificate** - base64-encoded string of certificate file in PEM format
- - **TFE TLS private key** - base64-encoded string of private key file in PEM format
- - **TFE custom CA bundle** - base64-encoded string of custom CA bundle file in PEM format
- 
+- **TFE license** - raw contents of TFE license file (i.e. the string value of `cat terraform.hclic`)
+- **TFE encryption password** - used for TFE's embedded Vault; randomly generate this yourself, this is kept completely internal to the TFE system
+- **TFE database password** - used to create PostgreSQL Flexible Server; randomly generate this yourself (avoid the `$` character as Azure PostgreSQL Flexible Server does not like it), fetched from within the module via data source and applied to the PostgreSQL Flexible Server resource
+- **TFE TLS certificate** - base64-encoded string of certificate file in PEM format
+- **TFE TLS private key** - base64-encoded string of private key file in PEM format
+- **TFE custom CA bundle** - base64-encoded string of custom CA bundle file in PEM format
+
  >📝 Note: See the [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md) doc for instructions on how to base64-encode the certificates with proper formatting before storing them as Key Vault secrets.
 
 ### Compute
@@ -70,23 +70,22 @@ Azure Key Vault containing the following TFE _bootstrap_ secrets:
 
 - Bastion host (if VM subnet is not reachable from clients/workstations)
 
-### Log Forwarding (optional)
+### Log forwarding (optional)
 
 One of the following logging destinations for the TFE container logs:
- - Azure Log Analytics Workspace
- - A custom Fluent Bit configuration to forward logs to a custom destination
 
----
+- Azure Log Analytics Workspace
+- A custom Fluent Bit configuration to forward logs to a custom destination
 
 ## Usage
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-2. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](./docs/deployment-customizations.md) for more details).
+1. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](./docs/deployment-customizations.md) for more details).
 
-3. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
-   
-    ```
+1. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
+
+    ```pre
     .
     └── environments
         ├── production
@@ -102,66 +101,74 @@ One of the following logging destinations for the TFE container logs:
             ├── terraform.tfvars
             └── variables.tf
     ```
+
     >📝 Note: In this example, the user will have two separate TFE deployments; one for their `sandbox` environment, and one for their `production` environment. This is recommended, but not required.
 
-4. (Optional) Uncomment and update the [AzureRM Remote State backend](https://www.terraform.io/docs/language/settings/backends/azurerm.html) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended so that your state file managing your TFE deployment is not stored on your local disk and others can safely collaborate, it is technically not required to use a remote backend config for your TFE deployment.
+1. (Optional) Uncomment and update the [AzureRM Remote State backend](https://www.terraform.io/docs/language/settings/backends/azurerm.html) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended so that your state file managing your TFE deployment is not stored on your local disk and others can safely collaborate, it is technically not required to use a remote backend config for your TFE deployment.
 
-5. Populate your own custom values into the `terraform.tfvars.example` file that was provided (in particular, the values enclosed in the `<>` characters). Then, remove the `.example` file extension such that the file is now named `terraform.tfvars`. If you would like to further customize your deployment beyond what is in your chosen example scenario, see the [deployment customizations](./docs/deployment-customizations.md) doc for more details on common customizations.
+1. Populate your own custom values into the `terraform.tfvars.example` file that was provided (in particular, the values enclosed in the `<>` characters). Then, remove the `.example` file extension such that the file is now named `terraform.tfvars`. If you would like to further customize your deployment beyond what is in your chosen example scenario, see the [deployment customizations](./docs/deployment-customizations.md) doc for more details on common customizations.
 
-6. Navigate to the directory of your newly created Terraform configuration for your TFE deployment, and run `terraform init`, `terraform plan`, and `terraform apply`.
+1. Navigate to the directory of your newly created Terraform configuration for your TFE deployment, and run `terraform init`, `terraform plan`, and `terraform apply`.
 
-7. After your `terraform apply` finishes successfully, you can monitor the installation progress by connecting to your TFE VM shell (via SSH or other preferred method) and observing the cloud-init (custom_data) script logs:<br>
+1. After your `terraform apply` finishes successfully, you can monitor the installation progress by connecting to your TFE VM shell (via SSH or other preferred method) and observing the cloud-init (custom_data) script logs:<br>
 
-   #### Connecting to Azure VM
+   **Connecting to the Azure VM**
 
    ```shell
    ssh -i /path/to/vm_ssh_private_key tfeadmin@<vm-private-ip>
    ```
 
-   #### Viewing the logs
-   
+   **Viewing the logs**
+
    View the higher-level logs:
-   
+
    ```shell
    tail -f /var/log/tfe-cloud-init.log
    ```
 
    View the lower-level logs:
-   
+
    ```shell
    journalctl -xu cloud-final -f
    ```
 
    >📝 Note: the `-f` argument is to follow the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
-   
-   #### Successful install log message
+
+   **Successful install log message**
 
    The log files should display the following message after the cloud-init (custom_data) script finishes successfully:
 
-   ```
+   ```shell
    [INFO] TFE custom_data script finished successfully!
    ```
 
-8. After the cloud-init (custom_data) script finishes successfully, while still connected to the TFE VM shell, you can check the health status of TFE:
-   
+1. After the cloud-init (custom_data) script finishes successfully, while still connected to the TFE VM shell, you can check the health status of TFE:
+
    ```shell
    cd /etc/tfe
    sudo docker compose exec tfe tfe-health-check-status
    ```
 
-9.  Follow the steps to [here](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user) to create the TFE initial admin user.
+1. Follow the steps to [create the TFE initial admin user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user).
 
 ## Docs
 
 Below are links to various docs related to the customization and management of your TFE deployment:
 
- - [Deployment Customizations](./docs/deployment-customizations.md)
- - [TFE Version Upgrades](./docs/tfe-version-upgrades.md)
- - [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md)
- - [TFE Configuration Settings](./docs/tfe-config-settings.md)
- - [Azure GovCloud Deployment](./docs/govcloud-deployment.md)
+- [Deployment Customizations](./docs/deployment-customizations.md)
+- [TFE Version Upgrades](./docs/tfe-version-upgrades.md)
+- [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md)
+- [TFE Configuration Settings](./docs/tfe-config-settings.md)
+- [Azure GovCloud Deployment](./docs/govcloud-deployment.md)
 
----
+## Module support
+
+This open source software is maintained by the HashiCorp Technical Field Organization, independently of our enterprise products. While our Support Engineering team provides dedicated support for our enterprise offerings, this open source software is not included.
+
+- For help using this open source software, please engage your account team.
+- To report bugs/issues with this open source software, please open them directly against this code repository using the GitHub issues feature.
+
+Please note that there is no official Service Level Agreement (SLA) for support of this software as a HashiCorp customer. This software falls under the definition of Community Software/Versions in your Agreement. We appreciate your understanding and collaboration in improving our open source projects.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -246,7 +253,7 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_tfe_tls_privkey_keyvault_secret_id"></a> [tfe\_tls\_privkey\_keyvault\_secret\_id](#input\_tfe\_tls\_privkey\_keyvault\_secret\_id) | ID of Key Vault secret containing TFE TLS private key. | `string` | n/a | yes |
 | <a name="input_vm_subnet_id"></a> [vm\_subnet\_id](#input\_vm\_subnet\_id) | Subnet ID for Virtual Machine Scaleset (VMSS). | `string` | n/a | yes |
 | <a name="input_vnet_id"></a> [vnet\_id](#input\_vnet\_id) | ID of VNet where TFE will be deployed. | `string` | n/a | yes |
-| <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | List of Azure availability zones to spread TFE resources across. | `set(string)` | <pre>[<br>  "1",<br>  "2",<br>  "3"<br>]</pre> | no |
+| <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | List of Azure availability zones to spread TFE resources across. | `set(string)` | <pre>[<br/>  "1",<br/>  "2",<br/>  "3"<br/>]</pre> | no |
 | <a name="input_common_tags"></a> [common\_tags](#input\_common\_tags) | Map of common tags for taggable Azure resources. | `map(string)` | `{}` | no |
 | <a name="input_container_runtime"></a> [container\_runtime](#input\_container\_runtime) | Container runtime to use for TFE. Valid values are 'docker' or 'podman'. | `string` | `"docker"` | no |
 | <a name="input_create_blob_storage_private_endpoint"></a> [create\_blob\_storage\_private\_endpoint](#input\_create\_blob\_storage\_private\_endpoint) | Boolean to create a private endpoint and private DNS zone for TFE Storage Account. | `bool` | `true` | no |
@@ -275,7 +282,7 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_postgres_geo_backup_keyvault_key_id"></a> [postgres\_geo\_backup\_keyvault\_key\_id](#input\_postgres\_geo\_backup\_keyvault\_key\_id) | ID of the Key Vault key to use for customer-managed key (CMK) encryption of PostgreSQL Flexible Server geo-redundant backups. This key must be in the same region as the geo-redundant backup. | `string` | `null` | no |
 | <a name="input_postgres_geo_backup_user_assigned_identity_id"></a> [postgres\_geo\_backup\_user\_assigned\_identity\_id](#input\_postgres\_geo\_backup\_user\_assigned\_identity\_id) | ID of the User-Assigned Identity to use for customer-managed key (CMK) encryption of PostgreSQL Flexible Server geo-redundant backups. This identity must have 'Get', 'WrapKey', and 'UnwrapKey' permissions to the Key Vault. | `string` | `null` | no |
 | <a name="input_postgres_geo_redundant_backup_enabled"></a> [postgres\_geo\_redundant\_backup\_enabled](#input\_postgres\_geo\_redundant\_backup\_enabled) | Boolean to enable PostreSQL geo-redundant backup configuration in paired Azure region. | `bool` | `true` | no |
-| <a name="input_postgres_maintenance_window"></a> [postgres\_maintenance\_window](#input\_postgres\_maintenance\_window) | Map of maintenance window settings for PostgreSQL Flexible Server. | `map(number)` | <pre>{<br>  "day_of_week": 0,<br>  "start_hour": 0,<br>  "start_minute": 0<br>}</pre> | no |
+| <a name="input_postgres_maintenance_window"></a> [postgres\_maintenance\_window](#input\_postgres\_maintenance\_window) | Map of maintenance window settings for PostgreSQL Flexible Server. | `map(number)` | <pre>{<br/>  "day_of_week": 0,<br/>  "start_hour": 0,<br/>  "start_minute": 0<br/>}</pre> | no |
 | <a name="input_postgres_primary_availability_zone"></a> [postgres\_primary\_availability\_zone](#input\_postgres\_primary\_availability\_zone) | Number for the availability zone for the primary PostgreSQL Flexible Server instance to reside in. | `number` | `1` | no |
 | <a name="input_postgres_secondary_availability_zone"></a> [postgres\_secondary\_availability\_zone](#input\_postgres\_secondary\_availability\_zone) | Number for the availability zone for the standby PostgreSQL Flexible Server instance to reside in. | `number` | `2` | no |
 | <a name="input_postgres_sku"></a> [postgres\_sku](#input\_postgres\_sku) | PostgreSQL database SKU. | `string` | `"GP_Standard_D4ds_v4"` | no |
