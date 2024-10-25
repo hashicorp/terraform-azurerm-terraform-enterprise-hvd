@@ -2,27 +2,26 @@
 
 Normal Azure subscriptions are hosted in what Azure refers to as their _public_ environment (`AzureCloud`). Azure has also defined an environment they call _Azure Government_ (`AzureUSGovernment`). The seperation of these environments means that some internal Azure API endpoints, DNS domains, and more will differ, which impacts some of the configuration setting values for a TFE deployment.
 
-
-## Configuration Settings
+## Configuration settings
 
 This module includes an input variable of type boolean named `is_govcloud_region` that defaults to `false`. Setting this to `true` will change some of the domain names and endpoints to support deploying TFE in the Azure Government cloud environment as follows:
 
-#### PostgreSQL
+### PostgreSQL
 
 - Changes from `*.postgres.database.azure.com` to `*.postgres.database.usgovcloudapi.net`.
 
-#### Blob Storage Account
+### Blob Storage Account
 
 - Changes from `*.blob.core.windows.net` to `*.blob.core.usgovcloudapi.net`.
 - Sets `TFE_OBJECT_STORAGE_AZURE_ENDPOINT` to `blob.core.usgovcloudapi.net`.
 
-#### Redis Cache
+### Redis Cache
 
-- Changes from `*.redis.cache.windows.net` to `*.redis.cache.usgovcloudapi.net` 
+- Changes from `*.redis.cache.windows.net` to `*.redis.cache.usgovcloudapi.net`
 
-### AzureRM Provider Block
+## AzureRM Provider Block
 
-You will need to update the value of `environment` within your azurerm provider block within your root Terraform configuration that deployst this module to `usgovernment` like so:
+You will need to update the value of `environment` within your azurerm provider block within your root Terraform configuration that deploys this module to `usgovernment` like so:
 
 ```hcl
 provider "azurerm" {
@@ -31,7 +30,7 @@ provider "azurerm" {
 }
 ```
 
-### AzureRM Remote State Backend Configuration
+## AzureRM Remote State Backend Configuration
 
 You will need to ensure that you specify the `environment` key within your AzureRM remote state backend configuration with a value of `usgovernment` like so:
 
@@ -46,5 +45,3 @@ terraform {
   }
 }
 ```
-
-
