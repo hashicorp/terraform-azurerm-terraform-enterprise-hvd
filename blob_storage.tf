@@ -7,14 +7,13 @@
 resource "azurerm_storage_account" "tfe" {
   count = var.is_secondary_region ? 0 : 1
 
-  name                     = "${var.friendly_name_prefix}tfeblob"
-  resource_group_name      = local.resource_group_name
-  location                 = var.location
-  account_kind             = "StorageV2"
-  account_tier             = "Standard"
-  access_tier              = "Hot"
-  account_replication_type = var.storage_account_replication_type
-  #enable_https_traffic_only       = true
+  name                            = "${var.friendly_name_prefix}tfeblob"
+  resource_group_name             = local.resource_group_name
+  location                        = var.location
+  account_kind                    = "StorageV2"
+  account_tier                    = "Standard"
+  access_tier                     = "Hot"
+  account_replication_type        = var.storage_account_replication_type
   https_traffic_only_enabled      = true
   min_tls_version                 = "TLS1_2"
   public_network_access_enabled   = var.storage_account_public_network_access_enabled
