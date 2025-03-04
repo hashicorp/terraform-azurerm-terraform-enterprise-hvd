@@ -201,17 +201,13 @@ variable "tfe_operational_mode" {
   }
 }
 
-locals {
-  container_runtime = var.vm_os_image == "redhat8" || var.vm_os_image == "redhat9" ? "podman" : "docker"
-}
-
 variable "tfe_http_port" {
   type        = number
   description = "HTTP port for TFE application containers to listen on."
   default     = 8080
 
   validation {
-    condition     = local.container_runtime == "podman" ? var.tfe_http_port != 80 : true
+    condition     = var.container_runtime == "podman" ? var.tfe_http_port != 80 : true
     error_message = "Value must not be `80` when `container_runtime` is `podman` to avoid conflicts."
   }
 }
@@ -222,7 +218,7 @@ variable "tfe_https_port" {
   default     = 8443
 
   validation {
-    condition     = local.container_runtime == "podman" ? var.tfe_https_port != 443 : true
+    condition     = var.container_runtime == "podman" ? var.tfe_https_port != 443 : true
     error_message = "Value must not be `80` when `container_runtime` is `podman` to avoid conflicts."
   }
 }
@@ -458,6 +454,19 @@ variable "vm_custom_image_rg_name" {
   }
 }
 
+variable "container_runtime" {
+  type        = string
+  description = "Value of container runtime to use for TFE deployment. For Redhat, the default is `podman`, but optionally `docker` can be used. For Ubuntu, the default is `docker`."
+
+  validation {
+    condition = (
+      (contains(["redhat8", "redhat9"], var.vm_os_image) && contains(["docker", "podman"], var.container_runtime)) ||
+      (contains(["ubuntu2204", "ubuntu2404"], var.vm_os_image) && var.container_runtime == "docker")
+    )
+    error_message = "For Redhat, the container runtime can be 'docker' or 'podman'. For Ubuntu, the container runtime must be 'docker'."
+  }
+}
+
 variable "docker_version" {
   type        = string
   description = "Version of Docker to install on TFE VMSS."
@@ -541,12 +550,6 @@ variable "tfe_database_parameters" {
   type        = string
   description = "PostgreSQL server parameters for the connection URI. Used to configure the PostgreSQL connection."
   default     = "sslmode=require"
-}
-
-variable "tfe_database_reconnect_enabled" {
-  type        = bool
-  description = "Boolean to enable database reconnection in the event of a TFE PostgreSQL database cluster failover."
-  default     = true
 }
 
 variable "create_postgres_private_endpoint" {

@@ -65,13 +65,13 @@ module "tfe" {
   vm_ssh_public_key   = var.vm_ssh_public_key
   vm_os_image         = var.vm_os_image
   vm_sku              = var.vm_sku
-  #container_runtime   = local.container_runtime
-  vm_admin_username = var.vm_admin_username
-  docker_version    = var.docker_version
+  container_runtime   = var.container_runtime
+  docker_version      = var.docker_version
+  vm_admin_username   = var.vm_admin_username
+
 
   # --- Database --- #
   tfe_database_password_keyvault_secret_name = var.tfe_database_password_keyvault_secret_name
-  tfe_database_reconnect_enabled             = var.tfe_database_reconnect_enabled
   tfe_database_name                          = var.tfe_database_name
   tfe_database_parameters                    = var.tfe_database_parameters
   postgres_enable_high_availability          = var.postgres_enable_high_availability

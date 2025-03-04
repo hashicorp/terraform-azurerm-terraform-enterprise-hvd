@@ -46,7 +46,8 @@ private_dns_zone_rg_name      = "<private-dns-zone-resource-group-name>"
 vmss_instance_count = <1>                 # optionally bump up to a max of 3 after successful installation
 vm_ssh_public_key   = "<ssh-rsa AAAA...>"
 vm_os_image         = "<redhat9>"         # `redhat9`, `redhat8`, or `ubuntu2404`, `ubuntu2204`. Redhat will use Podman for the container runtime and Ubuntu will use Docker
-docker_version      = "<28.0.1>"          # optionally set the Docker version of using one of the Ubuntu distros
+container_runtime   = "<podman>"          # Required. if `vm_os_image` is `redhat*` this can be `podman` or `docker`. If `vm_os_image` is set to `ubuntu*`, this must be `docker`
+docker_version      = "<28.0.1>"          # optionally set the Docker version if desired
 vm_sku              = "<Standard_D4s_v4>" # VM SKU to use. Refer to https://developer.hashicorp.com/validated-designs/terraform-solution-design-guides-terraform-enterprise/terraform-based-tfe-install under Azure
 vm_admin_username   = "<tfeadmin>"
 
@@ -57,12 +58,11 @@ postgres_geo_redundant_backup_enabled      = <true>
 postgres_administrator_login               = "<tfeadmin>"
 tfe_database_name                          = "<tfe>"
 tfe_database_parameters                    = "<sslmode=require>"
-tfe_database_reconnect_enabled             = <true>
 postgres_version                           = "16"
 postgres_sku                               = "<GP_Standard_D4ds_v4>"
 
 # --- Redis --- #
-redis_version                    = "7"
+redis_version = "7"
 
 # --- Object storage --- #
 storage_account_ip_allow = ["<192.168.1.20>"] # client/workstation you are running Terraform from (no subnet mask)

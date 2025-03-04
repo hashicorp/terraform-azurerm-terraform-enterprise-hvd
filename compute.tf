@@ -45,7 +45,7 @@ locals {
     tfe_image_repository_password              = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
     tfe_image_name                             = var.tfe_image_name
     tfe_image_tag                              = var.tfe_image_tag
-    container_runtime                          = local.container_runtime
+    container_runtime                          = var.container_runtime
     docker_version                             = var.docker_version
     is_govcloud_region                         = var.is_govcloud_region
 
@@ -65,12 +65,11 @@ locals {
     tfe_https_port                = var.tfe_https_port
 
     # Database settings
-    tfe_database_host              = "${azurerm_postgresql_flexible_server.tfe.fqdn}:5432"
-    tfe_database_name              = var.tfe_database_name
-    tfe_database_user              = azurerm_postgresql_flexible_server.tfe.administrator_login
-    tfe_database_password          = azurerm_postgresql_flexible_server.tfe.administrator_password
-    tfe_database_parameters        = var.tfe_database_parameters
-    tfe_database_reconnect_enabled = var.tfe_database_reconnect_enabled
+    tfe_database_host       = "${azurerm_postgresql_flexible_server.tfe.fqdn}:5432"
+    tfe_database_name       = var.tfe_database_name
+    tfe_database_user       = azurerm_postgresql_flexible_server.tfe.administrator_login
+    tfe_database_password   = azurerm_postgresql_flexible_server.tfe.administrator_password
+    tfe_database_parameters = var.tfe_database_parameters
 
 
     # Object storage settings
@@ -159,7 +158,6 @@ data "azurerm_platform_image" "latest_os_image" {
   offer     = local.vm_image_offer
   sku       = local.vm_image_sku
 }
-
 
 #------------------------------------------------------------------------------
 # Virtual machine scale set (VMSS)

@@ -18,8 +18,8 @@ Supported values:
 **Input variable:** `vm_os_image`
 
 Supported values:
-- `rhel9` & `rhel8` - will set your container runtime to `podman`
-- `ubuntu2404` & `ubuntu2204` - will set your container runtime to `docker`
+- `rhel9` & `rhel8` - Will support a `container_runtime` of `podman` (default) or `docker`
+- `ubuntu2404` & `ubuntu2204` - Will support a `container_runtime` of `docker` only
 - default is `rhel9`
 
 ### Container runtime
@@ -27,8 +27,9 @@ Supported values:
 **Input variable:** `container_runtime`
 
 Supported values:
- - `docker` - required `vm_os_image` is `ubuntu*`
- - `podman` - required `vm_os_image` is `rhel*`
+- `podman` - Supports `vm_os_image` value of `redhat*` 
+- `docker` - Supports `vm_os_image` value of `redhat*` and `ubuntu*`
+
 
 ### Load balancing
 
