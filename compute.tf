@@ -45,7 +45,7 @@ locals {
     tfe_image_repository_password              = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
     tfe_image_name                             = var.tfe_image_name
     tfe_image_tag                              = var.tfe_image_tag
-    container_runtime                          = var.container_runtime
+    container_runtime                          = local.container_runtime
     docker_version                             = var.docker_version
     is_govcloud_region                         = var.is_govcloud_region
 
@@ -61,15 +61,17 @@ locals {
     tfe_run_pipeline_image        = var.tfe_run_pipeline_image == null ? "" : var.tfe_run_pipeline_image
     tfe_backup_restore_token      = ""
     tfe_node_id                   = ""
-    tfe_http_port                 = 80
-    tfe_https_port                = 443
+    tfe_http_port                 = var.tfe_http_port
+    tfe_https_port                = var.tfe_https_port
 
     # Database settings
-    tfe_database_host       = "${azurerm_postgresql_flexible_server.tfe.fqdn}:5432"
-    tfe_database_name       = var.tfe_database_name
-    tfe_database_user       = azurerm_postgresql_flexible_server.tfe.administrator_login
-    tfe_database_password   = azurerm_postgresql_flexible_server.tfe.administrator_password
-    tfe_database_parameters = var.tfe_database_paramaters
+    tfe_database_host              = "${azurerm_postgresql_flexible_server.tfe.fqdn}:5432"
+    tfe_database_name              = var.tfe_database_name
+    tfe_database_user              = azurerm_postgresql_flexible_server.tfe.administrator_login
+    tfe_database_password          = azurerm_postgresql_flexible_server.tfe.administrator_password
+    tfe_database_parameters        = var.tfe_database_parameters
+    tfe_database_reconnect_enabled = var.tfe_database_reconnect_enabled
+
 
     # Object storage settings
     tfe_object_storage_type               = "azure"
@@ -120,6 +122,24 @@ locals {
   }
 }
 
+locals {
+  os_image_map = {
+    redhat8    = { publisher = "RedHat", offer = "RHEL" }
+    redhat9    = { publisher = "RedHat", offer = "RHEL" }
+    ubuntu2204 = { publisher = "Canonical", offer = "0001-com-ubuntu-server-jammy" }
+    ubuntu2404 = { publisher = "Canonical", offer = "ubuntu-24_04-lts" }
+  }
+
+  vm_image_publisher = local.os_image_map[var.vm_os_image].publisher
+  vm_image_offer     = local.os_image_map[var.vm_os_image].offer
+  vm_image_sku = (
+    var.vm_os_image == "redhat8" ? "810-gen2" :
+    var.vm_os_image == "redhat9" ? "95_gen2" :
+    var.vm_os_image == "ubuntu2204" ? "22_04-lts-gen2" :
+    var.vm_os_image == "ubuntu2404" ? "ubuntu-pro" : null
+  )
+}
+
 #------------------------------------------------------------------------------
 # Custom VM image lookup
 #------------------------------------------------------------------------------
@@ -129,6 +149,17 @@ data "azurerm_image" "custom" {
   name                = var.vm_custom_image_name
   resource_group_name = var.vm_custom_image_rg_name
 }
+
+#------------------------------------------------------------------------------
+# Latest OS image lookup
+#------------------------------------------------------------------------------
+data "azurerm_platform_image" "latest_os_image" {
+  location  = var.location
+  publisher = local.vm_image_publisher
+  offer     = local.vm_image_offer
+  sku       = local.vm_image_sku
+}
+
 
 #------------------------------------------------------------------------------
 # Virtual machine scale set (VMSS)
@@ -165,16 +196,16 @@ resource "azurerm_linux_virtual_machine_scale_set" "tfe" {
     }
   }
 
-  source_image_id = var.vm_custom_image_name == null ? null : data.azurerm_image.custom[0].id
+  source_image_id = var.vm_custom_image_name != null ? data.azurerm_image.custom[0].id : null
 
   dynamic "source_image_reference" {
     for_each = var.vm_custom_image_name == null ? [true] : []
 
     content {
-      publisher = var.vm_image_publisher
-      offer     = var.vm_image_offer
-      sku       = var.vm_image_sku
-      version   = var.vm_image_version
+      publisher = local.vm_image_publisher
+      offer     = local.vm_image_offer
+      sku       = local.vm_image_sku
+      version   = data.azurerm_platform_image.latest_os_image.version
     }
   }
 

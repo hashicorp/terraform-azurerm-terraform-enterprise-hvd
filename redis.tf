@@ -22,7 +22,7 @@ resource "azurerm_redis_cache" "tfe" {
 
   redis_configuration {
     authentication_enabled = var.tfe_redis_use_auth
-    rdb_backup_enabled    = false
+    rdb_backup_enabled     = false
   }
 
   tags = merge(

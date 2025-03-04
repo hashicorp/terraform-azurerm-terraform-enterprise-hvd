@@ -138,7 +138,7 @@ variable "tfe_image_name" {
 variable "tfe_image_tag" {
   type        = string
   description = "Tag for the TFE container image. This represents the version of TFE to deploy."
-  default     = "v202407-1"
+  default     = "v202502-1"
 }
 
 variable "tfe_image_repository_username" {
@@ -149,7 +149,7 @@ variable "tfe_image_repository_username" {
 
 variable "tfe_image_repository_password" {
   type        = string
-  description = "Pasword for container registry where TFE container image is hosted. Only set this if you are hosting the TFE container image in your own custom repository."
+  description = "Password for container registry where TFE container image is hosted. Only set this if you are hosting the TFE container image in your own custom repository."
   default     = null
 
   validation {
@@ -198,6 +198,32 @@ variable "tfe_operational_mode" {
   validation {
     condition     = var.tfe_operational_mode == "active-active" || var.tfe_operational_mode == "external"
     error_message = "Value must be `active-active` or `external`."
+  }
+}
+
+locals {
+  container_runtime = var.vm_os_image == "redhat8" || var.vm_os_image == "redhat9" ? "podman" : "docker"
+}
+
+variable "tfe_http_port" {
+  type        = number
+  description = "HTTP port for TFE application containers to listen on."
+  default     = 8080
+
+  validation {
+    condition     = local.container_runtime == "podman" ? var.tfe_http_port != 80 : true
+    error_message = "Value must not be `80` when `container_runtime` is `podman` to avoid conflicts."
+  }
+}
+
+variable "tfe_https_port" {
+  type        = number
+  description = "HTTPS port for TFE application containers to listen on."
+  default     = 8443
+
+  validation {
+    condition     = local.container_runtime == "podman" ? var.tfe_https_port != 443 : true
+    error_message = "Value must not be `80` when `container_runtime` is `podman` to avoid conflicts."
   }
 }
 
@@ -404,6 +430,17 @@ variable "vm_ssh_public_key" {
   default     = null
 }
 
+variable "vm_os_image" {
+  description = "The OS image to use for the VM. Options are: redhat8, redhat9, ubuntu2204, ubuntu2404."
+  type        = string
+  default     = "redhat9"
+
+  validation {
+    condition     = contains(["redhat8", "redhat9", "ubuntu2204", "ubuntu2404"], var.vm_os_image)
+    error_message = "Value must be one of 'redhat8', 'redhat9', 'ubuntu2204', or 'ubuntu2404'."
+  }
+}
+
 variable "vm_custom_image_name" {
   type        = string
   description = "Name of custom VM image to use for VMSS. If not using a custom image, leave this blank."
@@ -418,41 +455,6 @@ variable "vm_custom_image_rg_name" {
   validation {
     condition     = var.vm_custom_image_name != null ? var.vm_custom_image_rg_name != null : true
     error_message = "A value is required when `vm_custom_image_name` is not `null`."
-  }
-}
-
-variable "vm_image_publisher" {
-  type        = string
-  description = "Publisher of the VM image."
-  default     = "Canonical"
-}
-
-variable "vm_image_offer" {
-  type        = string
-  description = "Offer of the VM image."
-  default     = "0001-com-ubuntu-server-jammy"
-}
-
-variable "vm_image_sku" {
-  type        = string
-  description = "SKU of the VM image."
-  default     = "22_04-lts-gen2"
-}
-
-variable "vm_image_version" {
-  type        = string
-  description = "Version of the VM image."
-  default     = "latest"
-}
-
-variable "container_runtime" {
-  type        = string
-  description = "Container runtime to use for TFE. Valid values are 'docker' or 'podman'."
-  default     = "docker"
-
-  validation {
-    condition     = var.container_runtime == "docker" || var.container_runtime == "podman"
-    error_message = "Supported values are `docker` or `podman`."
   }
 }
 
@@ -509,7 +511,7 @@ variable "postgres_storage_mb" {
 variable "postgres_administrator_login" {
   type        = string
   description = "Username for administrator login of PostreSQL database."
-  default     = "tfe"
+  default     = "tfeadmin"
 }
 
 variable "postgres_backup_retention_days" {
@@ -535,10 +537,16 @@ variable "tfe_database_name" {
   default     = "tfe"
 }
 
-variable "tfe_database_paramaters" {
+variable "tfe_database_parameters" {
   type        = string
   description = "PostgreSQL server parameters for the connection URI. Used to configure the PostgreSQL connection."
   default     = "sslmode=require"
+}
+
+variable "tfe_database_reconnect_enabled" {
+  type        = bool
+  description = "Boolean to enable database reconnection in the event of a TFE PostgreSQL database cluster failover."
+  default     = true
 }
 
 variable "create_postgres_private_endpoint" {
