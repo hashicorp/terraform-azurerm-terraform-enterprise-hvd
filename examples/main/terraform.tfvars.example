@@ -20,10 +20,11 @@ tfe_encryption_password_keyvault_secret_id = "<https://tfe-encryption-password-k
 
 # --- TFE config settings --- #
 tfe_fqdn                 = "<tfe.azure.example.com>"
-tfe_image_tag            = "<v202502-1>" # TFE version, refer to https://developer.hashicorp.com/terraform/enterprise/releases
-tfe_capacity_concurrency = <10>          # Maximum number of Terraform runs that can execute concurrently on each Terraform Enterprise node. Defaults to 10.
-tfe_capacity_cpu         = <0>           # Maximum number of CPU cores a Terraform run is allowed to use. Set to 0 for no limit. Defaults to 0
-tfe_capacity_memory      = <2048>        # Maximum amount of memory (MiB) a Terraform run is allowed to use. Defaults to 2048
+tfe_image_tag            = "<v202502-1>"     # TFE version, refer to https://developer.hashicorp.com/terraform/enterprise/releases
+tfe_operational_mode     = "<active-active>" # `active-active` or `external`. refer to https://developer.hashicorp.com/validated-designs/terraform-solution-design-guides-terraform-enterprise/architecture#deployment-topologies
+tfe_capacity_concurrency = <10>              # Maximum number of Terraform runs that can execute concurrently on each Terraform Enterprise node. Defaults to 10.
+tfe_capacity_cpu         = <0>               # Maximum number of CPU cores a Terraform run is allowed to use. Set to 0 for no limit. Defaults to 0
+tfe_capacity_memory      = <2048>            # Maximum amount of memory (MiB) a Terraform run is allowed to use. Defaults to 2048
 tfe_metrics_enable       = <false>
 tfe_metrics_http_port    = <9090>
 tfe_metrics_https_port   = <9091>
