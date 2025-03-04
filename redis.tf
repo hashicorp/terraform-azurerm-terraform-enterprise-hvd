@@ -39,14 +39,14 @@ resource "azurerm_redis_cache" "tfe" {
 #
 #------------------------------------------------------------------------------
 resource "azurerm_private_dns_zone" "redis" {
-  count               = var.create_redis_private_endpoint ? 1 : 0
+  count               = var.create_redis_private_endpoint && var.tfe_operational_mode == "active-active" ? 1 : 0
   name                = var.is_govcloud_region ? "privatelink.redis.cache.usgovcloudapi.net" : "privatelink.redis.cache.windows.net"
   resource_group_name = local.resource_group_name
   tags                = var.common_tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "redis" {
-  count                 = var.create_redis_private_endpoint ? 1 : 0
+  count                 = var.create_redis_private_endpoint && var.tfe_operational_mode == "active-active" ? 1 : 0
   name                  = "${var.friendly_name_prefix}-redis-priv-dns-vnet-link"
   resource_group_name   = local.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.redis[0].name
