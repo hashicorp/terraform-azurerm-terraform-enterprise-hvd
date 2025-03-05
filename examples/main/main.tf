@@ -54,7 +54,6 @@ module "tfe" {
   db_subnet_id    = var.db_subnet_id
   redis_subnet_id = var.redis_subnet_id
 
-
   # --- DNS (optional) --- #
   create_tfe_private_dns_record = var.create_tfe_private_dns_record
   private_dns_zone_name         = var.private_dns_zone_name
@@ -69,7 +68,6 @@ module "tfe" {
   docker_version      = var.docker_version
   vm_admin_username   = var.vm_admin_username
 
-
   # --- Database --- #
   tfe_database_password_keyvault_secret_name = var.tfe_database_password_keyvault_secret_name
   tfe_database_name                          = var.tfe_database_name
@@ -79,7 +77,6 @@ module "tfe" {
   postgres_administrator_login               = var.postgres_administrator_login
   postgres_version                           = var.postgres_version
   postgres_sku                               = var.postgres_sku
-
 
   # --- Object storage --- #
   storage_account_ip_allow = var.storage_account_ip_allow
