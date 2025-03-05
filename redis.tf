@@ -22,7 +22,7 @@ resource "azurerm_redis_cache" "tfe" {
 
   redis_configuration {
     authentication_enabled = var.tfe_redis_use_auth
-    rdb_backup_enabled    = false
+    rdb_backup_enabled     = false
   }
 
   tags = merge(
@@ -39,16 +39,14 @@ resource "azurerm_redis_cache" "tfe" {
 #
 #------------------------------------------------------------------------------
 resource "azurerm_private_dns_zone" "redis" {
-  count = var.create_redis_private_endpoint ? 1 : 0
-
+  count               = var.create_redis_private_endpoint && var.tfe_operational_mode == "active-active" ? 1 : 0
   name                = var.is_govcloud_region ? "privatelink.redis.cache.usgovcloudapi.net" : "privatelink.redis.cache.windows.net"
   resource_group_name = local.resource_group_name
   tags                = var.common_tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "redis" {
-  count = var.create_redis_private_endpoint ? 1 : 0
-
+  count                 = var.create_redis_private_endpoint && var.tfe_operational_mode == "active-active" ? 1 : 0
   name                  = "${var.friendly_name_prefix}-redis-priv-dns-vnet-link"
   resource_group_name   = local.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.redis[0].name
@@ -57,8 +55,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "redis" {
 }
 
 resource "azurerm_private_endpoint" "redis" {
-  count = var.create_redis_private_endpoint ? 1 : 0
-
+  count               = var.create_redis_private_endpoint && var.tfe_operational_mode == "active-active" ? 1 : 0
   name                = "${var.friendly_name_prefix}-tfe-redis-private-endpoint"
   resource_group_name = local.resource_group_name
   location            = var.location
@@ -78,12 +75,12 @@ resource "azurerm_private_endpoint" "redis" {
 }
 
 resource "azurerm_private_dns_a_record" "redis" {
-  count = var.create_redis_private_endpoint ? 1 : 0
-
+  count               = var.create_redis_private_endpoint && var.tfe_operational_mode == "active-active" ? 1 : 0
   name                = azurerm_redis_cache.tfe[0].name
   resource_group_name = local.resource_group_name
   zone_name           = azurerm_private_dns_zone.redis[0].name
   ttl                 = 300
   records             = [azurerm_private_endpoint.redis[0].private_service_connection[0].private_ip_address]
-  tags                = var.common_tags
+
+  tags = var.common_tags
 }

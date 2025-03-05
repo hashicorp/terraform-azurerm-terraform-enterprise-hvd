@@ -52,7 +52,7 @@ function install_azcli {
       log "INFO" "Installing Azure CLI for RHEL $OS_MAJOR_VERSION."
       rpm --import https://packages.microsoft.com/keys/microsoft.asc
       dnf update -y
-      sudo dnf install -y https://packages.microsoft.com/config/rhel/$OS_MAJOR_VERSION/packages-microsoft-prod.rpm
+      dnf install -y https://packages.microsoft.com/config/rhel/$OS_MAJOR_VERSION/packages-microsoft-prod.rpm
       dnf install -y azure-cli
     fi
   fi
@@ -246,8 +246,8 @@ services:
       - /var/run
       - /var/log/terraform-enterprise
     ports:
-      - 80:80
-      - 443:443
+      - 80:${tfe_http_port}
+      - 443:${tfe_https_port}
 %{ if tfe_operational_mode == "active-active" ~}
       - 8201:8201
 %{ endif ~}
@@ -326,9 +326,9 @@ spec:
     - name: "TFE_NODE_ID"
       value: ${tfe_node_id}
     - name: "TFE_HTTP_PORT"
-      value: 8080
+      value: ${tfe_http_port}
     - name: "TFE_HTTPS_PORT"
-      value: 8443
+      value: ${tfe_https_port}
 
     # Database settings
     - name: "TFE_DATABASE_HOST"
@@ -431,10 +431,10 @@ spec:
     image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
     name: "terraform-enterprise"
     ports:
-    - containerPort: 8080
-      hostPort: ${tfe_http_port}
-    - containerPort: 8443
-      hostPort: ${tfe_https_port}
+    - containerPort: ${tfe_http_port}
+      hostPort: 80
+    - containerPort: ${tfe_https_port}
+      hostPort: 443
     - containerPort: 8201
       hostPort: 8201
     securityContext:
