@@ -56,7 +56,7 @@ Azure Key Vault containing the following TFE _bootstrap_ secrets:
 - **TFE TLS private key** - base64-encoded string of private key file in PEM format
 - **TFE custom CA bundle** - base64-encoded string of custom CA bundle file in PEM format
 
- >📝 Note: See the [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md) doc for instructions on how to base64-encode the certificates with proper formatting before storing them as Key Vault secrets.
+ >📝 Note: See the [TFE TLS Certificate Rotation](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/blob/0.2.0/docs/tfe-cert-rotation.md) doc for instructions on how to base64-encode the certificates with proper formatting before storing them as Key Vault secrets.
 
 ### Compute
 
@@ -81,7 +81,7 @@ One of the following logging destinations for the TFE container logs:
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-1. Within the [examples/main](./examples/main) directory is a ready-made Terraform configuration which contains example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](./docs/deployment-customizations.md) for more details).
+1. Within the [examples/main](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/blob/0.2.0/examples/main) directory is a ready-made Terraform configuration which contains example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/blob/0.2.0/docs/deployment-customizations.md) for more details).
 
 1. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
 
@@ -106,7 +106,7 @@ One of the following logging destinations for the TFE container logs:
 
 1. (Optional) Uncomment and update the [AzureRM Remote State backend](https://www.terraform.io/docs/language/settings/backends/azurerm.html) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended so that your state file managing your TFE deployment is not stored on your local disk and others can safely collaborate, it is technically not required to use a remote backend config for your TFE deployment.
 
-1. Populate your own custom values into the `terraform.tfvars.example` file that was provided (in particular, the values enclosed in the `<>` characters). Then, remove the `.example` file extension such that the file is now named `terraform.tfvars`. If you would like to further customize your deployment beyond what is in your chosen example scenario, see the [deployment customizations](./docs/deployment-customizations.md) doc for more details on common customizations.
+1. Populate your own custom values into the `terraform.tfvars.example` file that was provided (in particular, the values enclosed in the `<>` characters). Then, remove the `.example` file extension such that the file is now named `terraform.tfvars`. If you would like to further customize your deployment beyond what is in your chosen example scenario, see the [deployment customizations](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/blob/0.2.0/docs/deployment-customizations.md) doc for more details on common customizations.
 
 1. Navigate to the directory of your newly created Terraform configuration for your TFE deployment, and run `terraform init`, `terraform plan`, and `terraform apply`.
 
@@ -155,11 +155,11 @@ One of the following logging destinations for the TFE container logs:
 
 Below are links to various docs related to the customization and management of your TFE deployment:
 
-- [Deployment Customizations](./docs/deployment-customizations.md)
-- [TFE Version Upgrades](./docs/tfe-version-upgrades.md)
-- [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md)
-- [TFE Configuration Settings](./docs/tfe-config-settings.md)
-- [Azure GovCloud Deployment](./docs/govcloud-deployment.md)
+- [Deployment Customizations](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/blob/0.2.0/docs/deployment-customizations.md)
+- [TFE Version Upgrades](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/blob/0.2.0/docs/tfe-version-upgrades.md)
+- [TFE TLS Certificate Rotation](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/blob/0.2.0/docs/tfe-cert-rotation.md)
+- [TFE Configuration Settings](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/blob/0.2.0/docs/tfe-config-settings.md)
+- [Azure GovCloud Deployment](https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/blob/0.2.0/docs/govcloud-deployment.md)
 
 ## Module support
 
