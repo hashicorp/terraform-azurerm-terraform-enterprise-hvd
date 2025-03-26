@@ -45,3 +45,13 @@ terraform {
   }
 }
 ```
+## Troubleshooting AzureRM Authentication Issues
+
+First, see this link for instructions on setting Azure CLI to use the US Government Cloud:  
+[Azure CLI - Logging into the Azure CLI](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/azure_cli#logging-into-the-azure-cli)
+
+In some cases, it may be necessary to set the `ARM_ENVIRONMENT` variable to `usgovernment`:
+
+```bash
+export ARM_ENVIRONMENT=usgovernment
+```

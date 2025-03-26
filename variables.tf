@@ -20,8 +20,8 @@ variable "location" {
   description = "Azure region for this TFE deployment."
 
   validation {
-    condition     = contains(["eastus", "westus", "centralus", "eastus2", "westus2", "westeurope", "northeurope", "southeastasia", "eastasia", "australiaeast", "australiasoutheast", "uksouth", "ukwest", "canadacentral", "canadaeast", "southindia", "centralindia", "westindia", "japaneast", "japanwest", "koreacentral", "koreasouth", "francecentral", "southafricanorth", "uaenorth", "brazilsouth", "switzerlandnorth", "germanywestcentral", "norwayeast", "westcentralus"], var.location)
-    error_message = "Value is not a valid Azure region."
+    condition     = var.is_govcloud_region ? contains(["usgovvirginia", "usgovtexas", "usgovarizona", "usdodcentral", "usdodeast"], var.location) : contains(["eastus", "westus", "centralus", "eastus2", "westus2", "westeurope", "northeurope", "southeastasia", "eastasia", "australiaeast", "australiasoutheast", "uksouth", "ukwest", "canadacentral", "canadaeast", "southindia", "centralindia", "westindia", "japaneast", "japanwest", "koreacentral", "koreasouth", "francecentral", "southafricanorth", "uaenorth", "brazilsouth", "switzerlandnorth", "germanywestcentral", "norwayeast", "westcentralus"], var.location)
+    error_message = var.is_govcloud_region ? "Value is not a valid Azure Government region." : "Value is not a valid Azure region."
   }
 }
 

@@ -2,7 +2,8 @@
 create_resource_group = <true>
 resource_group_name   = "<tfe-resource-group-name>"
 location              = "<azure-region>"
-friendly_name_prefix  = "<sandbox>"
+is_govcloud_region    = false                      # Refer to `terraform-azurerm-terraform-enterprise-hvd/docs/govcloud-deployment.md` for more information
+friendly_name_prefix  = "<sandbox>"                  
 common_tags = {
   App   = "TFE"
   Env   = "<sandbox>"
