@@ -5,7 +5,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.116"
+      version = "~> 3.117"
     }
   }
 }
@@ -23,6 +23,7 @@ module "tfe" {
   location              = var.location
   friendly_name_prefix  = var.friendly_name_prefix
   common_tags           = var.common_tags
+  is_govcloud_region    = var.is_govcloud_region
 
   # --- Bootstrap --- #
   bootstrap_keyvault_name                    = var.bootstrap_keyvault_name
