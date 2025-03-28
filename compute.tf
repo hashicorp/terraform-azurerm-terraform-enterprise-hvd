@@ -77,7 +77,7 @@ locals {
     tfe_object_storage_azure_account_key  = !var.tfe_object_storage_azure_use_msi ? local.tfe_object_storage_azure_account_key : ""
     tfe_object_storage_azure_account_name = var.is_secondary_region ? data.azurerm_storage_account.tfe[0].name : azurerm_storage_account.tfe[0].name
     tfe_object_storage_azure_container    = var.is_secondary_region ? data.azurerm_storage_container.tfe[0].name : azurerm_storage_container.tfe[0].name
-    tfe_object_storage_azure_endpoint     = var.is_govcloud_region ? split(".blob.", azurerm_storage_account.tfe[0].primary_blob_host)[1] : ""
+    tfe_object_storage_azure_endpoint     = var.is_govcloud_region ? "blob.core.usgovcloudapi.net" : ""
     tfe_object_storage_azure_use_msi      = var.tfe_object_storage_azure_use_msi
     tfe_object_storage_azure_client_id    = var.tfe_object_storage_azure_use_msi ? azurerm_user_assigned_identity.tfe.client_id : ""
 
