@@ -30,6 +30,7 @@ locals {
 # Custom data (cloud-init) script arguments
 #------------------------------------------------------------------------------
 locals {
+  tfe_startup_script_tpl               = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_custom_data.sh.tpl"
   redis_port                           = var.tfe_redis_use_tls ? 6380 : 6379
   tfe_object_storage_azure_account_key = var.is_secondary_region ? data.azurerm_storage_account.tfe[0].primary_access_key : azurerm_storage_account.tfe[0].primary_access_key
 
@@ -174,7 +175,8 @@ resource "azurerm_linux_virtual_machine_scale_set" "tfe" {
   zone_balance        = true
   zones               = var.availability_zones
   health_probe_id     = var.create_lb ? azurerm_lb_probe.tfe[0].id : null
-  custom_data         = base64encode(templatefile("${path.module}/templates/tfe_custom_data.sh.tpl", local.custom_data_args))
+  # custom_data         = base64encode(templatefile("${path.module}/templates/tfe_custom_data.sh.tpl", local.custom_data_args))
+  custom_data = base64encode(templatefile("${local.tfe_startup_script_tpl}", local.custom_data_args))
 
   scale_in {
     rule = "OldestVM"
