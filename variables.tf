@@ -454,6 +454,17 @@ variable "vm_custom_image_rg_name" {
   }
 }
 
+variable "custom_tfe_startup_script_template" {
+  type        = string
+  description = "Name of custom TFE startup script template file. File must exist within a directory named `./templates` within your current working directory."
+  default     = null
+
+  validation {
+    condition     = var.custom_tfe_startup_script_template != null ? fileexists("${path.cwd}/templates/${var.custom_tfe_startup_script_template}") : true
+    error_message = "File not found. Ensure the file exists within a directory named `./templates` within your current working directory."
+  }
+}
+
 variable "container_runtime" {
   type        = string
   description = "Value of container runtime to use for TFE deployment. For Redhat, the default is `podman`, but optionally `docker` can be used. For Ubuntu, the default is `docker`."
