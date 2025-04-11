@@ -470,7 +470,7 @@ variable "container_runtime" {
 variable "docker_version" {
   type        = string
   description = "Version of Docker to install on TFE VMSS."
-  default     = "24.0.9"
+  default     = "28.0.1"
 }
 
 variable "vm_disk_encryption_set_name" {
