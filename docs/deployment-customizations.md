@@ -66,6 +66,26 @@ public_dns_zone_name          = "<example.com>"
 public_dns_zone_rg_name       = "<my-public-dns-zone-resource-group-name>"
 ```
 
+### Secondary hostname and optional managed public endpoint
+
+When your primary TFE hostname should remain private or operator-facing, but integration callbacks such as OIDC, VCS, or run tasks should use a distinct public hostname, set `tfe_hostname_secondary` and the corresponding hostname choice variables. Optionally, the module can add a second Azure public IP and Load Balancer frontend for the secondary hostname and manage the public DNS record in the same zone.
+
+```hcl
+tfe_hostname_secondary              = "tfe-integrations.azure.example.com"
+tfe_oidc_hostname_choice            = "secondary"
+tfe_vcs_hostname_choice             = "secondary"
+tfe_run_task_hostname_choice        = "secondary"
+tfe_tls_cert_keyvault_secret_id_secondary    = "<https://tfe-secondary-cert-secret-id>"
+tfe_tls_privkey_keyvault_secret_id_secondary = "<https://tfe-secondary-key-secret-id>"
+tfe_tls_ca_bundle_keyvault_secret_id_secondary = "<https://tfe-secondary-ca-secret-id>"
+create_tfe_secondary_public_endpoint   = true
+create_tfe_secondary_public_dns_record = true
+public_dns_zone_name                   = "azure.example.com"
+public_dns_zone_rg_name                = "<my-public-dns-zone-resource-group-name>"
+```
+
+If you want the secondary hostname to reuse an existing, externally managed endpoint, leave `create_tfe_secondary_public_endpoint = false` and manage the DNS target outside this module.
+
 ## Log forwarding
 
 The following variables may be set to enable TFE log forwarding (via Fluent Bit). The destinations supported at this time are an Azure Log Analytics Workspace or a custom Fluent Bit configuration, either of which would need to exist as a prerequisite.

@@ -27,10 +27,12 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 - Redis cache subnet ID
 - Ability to create private endpoints on the database and redis cache subnets
 - Chosen fully qualified domain name (FQDN) for your TFE instance (_e.g._ `tfe.azure.example.com`)
+- Optional secondary fully qualified domain name (FQDN) for integration traffic (_e.g._ `tfe-integrations.azure.example.com`)
 
 #### Network security group (NSG)/firewall rules
 
 - Allow `TCP/443` ingress to load balancer subnet (if TFE load balancer is to be _internal_) or VM subnet (if TFE load balancer is to be _external_) from CIDR ranges of TFE users/clients, your VCS, and other systems (such as CI/CD) that will need to access TFE
+- If `create_tfe_secondary_public_endpoint = true`, allow `TCP/443` ingress to the same TFE VM path for clients that need to reach the secondary hostname
 - (Optional) Allow `TCP/9091` (HTTPS) and/or `TCP/9090` (HTTP) ingress to VM subnet from monitoring/observability tool CIDR range (for scraping TFE metrics endpoints)
 - Allow `TCP/5432` ingress to database subnet from VM subnet (for PostgreSQL traffic)
 - Allow `TCP/6380` ingress to Redis cache subnetfrom VM subnet (for Redis TLS traffic)
@@ -55,6 +57,7 @@ Azure Key Vault containing the following TFE _bootstrap_ secrets:
 - **TFE TLS certificate** - base64-encoded string of certificate file in PEM format
 - **TFE TLS private key** - base64-encoded string of private key file in PEM format
 - **TFE custom CA bundle** - base64-encoded string of custom CA bundle file in PEM format
+- **Optional secondary TFE TLS certificate, private key, and CA bundle** - required when `tfe_hostname_secondary` is set
 
  >📝 Note: See the [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md) doc for instructions on how to base64-encode the certificates with proper formatting before storing them as Key Vault secrets.
 
@@ -189,6 +192,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | Name | Type |
 |------|------|
 | [azurerm_dns_a_record.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/dns_a_record) | resource |
+| [azurerm_dns_a_record.tfe_secondary](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/dns_a_record) | resource |
 | [azurerm_key_vault_access_policy.postgres_cmk](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault_access_policy) | resource |
 | [azurerm_key_vault_access_policy.storage_account_cmk](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault_access_policy) | resource |
 | [azurerm_key_vault_access_policy.tfe_kv_reader](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault_access_policy) | resource |
@@ -196,6 +200,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | [azurerm_lb_backend_address_pool.tfe_servers](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/lb_backend_address_pool) | resource |
 | [azurerm_lb_probe.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/lb_probe) | resource |
 | [azurerm_lb_rule.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/lb_rule) | resource |
+| [azurerm_lb_rule.tfe_secondary](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/lb_rule) | resource |
 | [azurerm_linux_virtual_machine_scale_set.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_virtual_machine_scale_set) | resource |
 | [azurerm_postgresql_flexible_server.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/postgresql_flexible_server) | resource |
 | [azurerm_postgresql_flexible_server_configuration.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/postgresql_flexible_server_configuration) | resource |
@@ -212,6 +217,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | [azurerm_private_endpoint.blob_storage](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint) | resource |
 | [azurerm_private_endpoint.redis](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint) | resource |
 | [azurerm_public_ip.tfe_lb](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip) | resource |
+| [azurerm_public_ip.tfe_lb_secondary](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip) | resource |
 | [azurerm_redis_cache.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redis_cache) | resource |
 | [azurerm_resource_group.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) | resource |
 | [azurerm_role_assignment.tfe_kv_reader](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
@@ -264,6 +270,8 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_create_resource_group"></a> [create\_resource\_group](#input\_create\_resource\_group) | Boolean to create a new resource group for this TFE deployment. | `bool` | `true` | no |
 | <a name="input_create_tfe_private_dns_record"></a> [create\_tfe\_private\_dns\_record](#input\_create\_tfe\_private\_dns\_record) | Boolean to create a DNS record for TFE in a private Azure DNS zone. A `private_dns_zone_name` must also be provided when `true`. | `bool` | `false` | no |
 | <a name="input_create_tfe_public_dns_record"></a> [create\_tfe\_public\_dns\_record](#input\_create\_tfe\_public\_dns\_record) | Boolean to create a DNS record for TFE in a public Azure DNS zone. A `public_dns_zone_name` must also be provided when `true`. | `bool` | `false` | no |
+| <a name="input_create_tfe_secondary_public_dns_record"></a> [create\_tfe\_secondary\_public\_dns\_record](#input\_create\_tfe\_secondary\_public\_dns\_record) | Boolean to create a public Azure DNS record for `tfe_hostname_secondary`. | `bool` | `false` | no |
+| <a name="input_create_tfe_secondary_public_endpoint"></a> [create\_tfe\_secondary\_public\_endpoint](#input\_create\_tfe\_secondary\_public\_endpoint) | Boolean to create a managed public Azure load balancer frontend and public IP for `tfe_hostname_secondary`. | `bool` | `false` | no |
 | <a name="input_custom_fluent_bit_config"></a> [custom\_fluent\_bit\_config](#input\_custom\_fluent\_bit\_config) | Custom Fluent Bit configuration for log forwarding. Only valid if `log_fwd_destination_type` is `custom`. | `string` | `null` | no |
 | <a name="input_custom_tfe_startup_script_template"></a> [custom\_tfe\_startup\_script\_template](#input\_custom\_tfe\_startup\_script\_template) | Name of custom TFE startup script template file. File must exist within a directory named `./templates` within your current working directory. | `string` | `null` | no |
 | <a name="input_docker_version"></a> [docker\_version](#input\_docker\_version) | Version of Docker to install on TFE VMSS. | `string` | `"28.0.1"` | no |
@@ -316,6 +324,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_tfe_database_name"></a> [tfe\_database\_name](#input\_tfe\_database\_name) | PostgreSQL database name for TFE. | `string` | `"tfe"` | no |
 | <a name="input_tfe_database_parameters"></a> [tfe\_database\_parameters](#input\_tfe\_database\_parameters) | PostgreSQL server parameters for the connection URI. Used to configure the PostgreSQL connection. | `string` | `"sslmode=require"` | no |
 | <a name="input_tfe_hairpin_addressing"></a> [tfe\_hairpin\_addressing](#input\_tfe\_hairpin\_addressing) | Boolean to enable hairpin addressing for layer 4 load balancer with loopback prevention. Must be `true` when `lb_is_internal` is `true`. | `bool` | `true` | no |
+| <a name="input_tfe_hostname_secondary"></a> [tfe\_hostname\_secondary](#input\_tfe\_hostname\_secondary) | Secondary externally resolvable fully qualified domain name for TFE integration traffic such as OIDC, VCS, or run tasks. | `string` | `null` | no |
 | <a name="input_tfe_http_port"></a> [tfe\_http\_port](#input\_tfe\_http\_port) | HTTP port for TFE application containers to listen on. | `number` | `8080` | no |
 | <a name="input_tfe_https_port"></a> [tfe\_https\_port](#input\_tfe\_https\_port) | HTTPS port for TFE application containers to listen on. | `number` | `8443` | no |
 | <a name="input_tfe_image_name"></a> [tfe\_image\_name](#input\_tfe\_image\_name) | Name of the TFE container image. Only change this if you are hosting the TFE container image in your own custom repository. | `string` | `"hashicorp/terraform-enterprise"` | no |
@@ -329,6 +338,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_tfe_metrics_http_port"></a> [tfe\_metrics\_http\_port](#input\_tfe\_metrics\_http\_port) | HTTP port for TFE metrics endpoint. | `number` | `9090` | no |
 | <a name="input_tfe_metrics_https_port"></a> [tfe\_metrics\_https\_port](#input\_tfe\_metrics\_https\_port) | HTTPS port for TFE metrics endpoint. | `number` | `9091` | no |
 | <a name="input_tfe_object_storage_azure_use_msi"></a> [tfe\_object\_storage\_azure\_use\_msi](#input\_tfe\_object\_storage\_azure\_use\_msi) | Boolean to use a User-Assigned Identity (MSI) for TFE blob storage account authentication rather than a storage account key. | `bool` | `true` | no |
+| <a name="input_tfe_oidc_hostname_choice"></a> [tfe\_oidc\_hostname\_choice](#input\_tfe\_oidc\_hostname\_choice) | Hostname choice for TFE OIDC integrations. Supported values are `primary` and `secondary`. | `string` | `"primary"` | no |
 | <a name="input_tfe_operational_mode"></a> [tfe\_operational\_mode](#input\_tfe\_operational\_mode) | [Operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes) for TFE. Valid values are `active-active` or `external`. | `string` | `"active-active"` | no |
 | <a name="input_tfe_primary_resource_group_name"></a> [tfe\_primary\_resource\_group\_name](#input\_tfe\_primary\_resource\_group\_name) | Name of existing resource group of TFE deployment in primary region. Only set when `is_secondary_region` is `true`. | `string` | `null` | no |
 | <a name="input_tfe_primary_storage_account_name"></a> [tfe\_primary\_storage\_account\_name](#input\_tfe\_primary\_storage\_account\_name) | Name of existing TFE storage account in primary region. Only set when `is_secondary_region` is `true`. | `string` | `null` | no |
@@ -337,8 +347,13 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_tfe_redis_use_tls"></a> [tfe\_redis\_use\_tls](#input\_tfe\_redis\_use\_tls) | Boolean to enable TLS for the Redis cache. | `bool` | `true` | no |
 | <a name="input_tfe_run_pipeline_docker_network"></a> [tfe\_run\_pipeline\_docker\_network](#input\_tfe\_run\_pipeline\_docker\_network) | Docker network where the containers that execute Terraform runs will be created. The network must already exist, it will not be created automatically. Leave as `null` to use the default network. | `string` | `null` | no |
 | <a name="input_tfe_run_pipeline_image"></a> [tfe\_run\_pipeline\_image](#input\_tfe\_run\_pipeline\_image) | Name of the Docker image to use for the run pipeline driver. | `string` | `null` | no |
+| <a name="input_tfe_run_task_hostname_choice"></a> [tfe\_run\_task\_hostname\_choice](#input\_tfe\_run\_task\_hostname\_choice) | Hostname choice for TFE run task integrations. Supported values are `primary` and `secondary`. | `string` | `"primary"` | no |
+| <a name="input_tfe_tls_ca_bundle_keyvault_secret_id_secondary"></a> [tfe\_tls\_ca\_bundle\_keyvault\_secret\_id\_secondary](#input\_tfe\_tls\_ca\_bundle\_keyvault\_secret\_id\_secondary) | ID of Key Vault secret containing the secondary TFE TLS custom CA bundle. | `string` | `null` | no |
+| <a name="input_tfe_tls_cert_keyvault_secret_id_secondary"></a> [tfe\_tls\_cert\_keyvault\_secret\_id\_secondary](#input\_tfe\_tls\_cert\_keyvault\_secret\_id\_secondary) | ID of Key Vault secret containing the secondary TFE TLS certificate. | `string` | `null` | no |
 | <a name="input_tfe_tls_enforce"></a> [tfe\_tls\_enforce](#input\_tfe\_tls\_enforce) | Boolean to enforce TLS, Strict-Transport-Security headers, and secure cookies within TFE. | `bool` | `false` | no |
+| <a name="input_tfe_tls_privkey_keyvault_secret_id_secondary"></a> [tfe\_tls\_privkey\_keyvault\_secret\_id\_secondary](#input\_tfe\_tls\_privkey\_keyvault\_secret\_id\_secondary) | ID of Key Vault secret containing the secondary TFE TLS private key. | `string` | `null` | no |
 | <a name="input_tfe_vault_disable_mlock"></a> [tfe\_vault\_disable\_mlock](#input\_tfe\_vault\_disable\_mlock) | Boolean to disable mlock for internal Vault. | `bool` | `false` | no |
+| <a name="input_tfe_vcs_hostname_choice"></a> [tfe\_vcs\_hostname\_choice](#input\_tfe\_vcs\_hostname\_choice) | Hostname choice for TFE VCS integrations. Supported values are `primary` and `secondary`. | `string` | `"primary"` | no |
 | <a name="input_vm_admin_username"></a> [vm\_admin\_username](#input\_vm\_admin\_username) | Admin username for VMs in VMSS. | `string` | `"tfeadmin"` | no |
 | <a name="input_vm_custom_image_name"></a> [vm\_custom\_image\_name](#input\_vm\_custom\_image\_name) | Name of custom VM image to use for VMSS. If not using a custom image, leave this blank. | `string` | `null` | no |
 | <a name="input_vm_custom_image_rg_name"></a> [vm\_custom\_image\_rg\_name](#input\_vm\_custom\_image\_rg\_name) | Name of Resource Group where `vm_custom_image_name` image resides. Only valid if `vm_custom_image_name` is not `null`. | `string` | `null` | no |
@@ -354,9 +369,11 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 
 | Name | Description |
 |------|-------------|
+| <a name="output_secondary_url"></a> [secondary\_url](#output\_secondary\_url) | URL of the optional secondary TFE hostname. |
 | <a name="output_tfe_database_host"></a> [tfe\_database\_host](#output\_tfe\_database\_host) | FQDN and port of PostgreSQL Flexible Server. |
 | <a name="output_tfe_database_name"></a> [tfe\_database\_name](#output\_tfe\_database\_name) | Name of PostgreSQL Flexible Server database. |
 | <a name="output_tfe_object_storage_azure_account_name"></a> [tfe\_object\_storage\_azure\_account\_name](#output\_tfe\_object\_storage\_azure\_account\_name) | Name of primary TFE Azure Storage Account. |
 | <a name="output_tfe_object_storage_azure_container_name"></a> [tfe\_object\_storage\_azure\_container\_name](#output\_tfe\_object\_storage\_azure\_container\_name) | Name of TFE Azure Storage Container. |
+| <a name="output_tfe_secondary_public_ip_address"></a> [tfe\_secondary\_public\_ip\_address](#output\_tfe\_secondary\_public\_ip\_address) | Public IP address for the managed secondary TFE endpoint when enabled. |
 | <a name="output_url"></a> [url](#output\_url) | URL of TFE application based on `tfe_fqdn` input. |
 <!-- END_TF_DOCS -->

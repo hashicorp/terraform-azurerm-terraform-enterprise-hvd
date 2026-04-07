@@ -9,6 +9,16 @@ output "url" {
   description = "URL of TFE application based on `tfe_fqdn` input."
 }
 
+output "secondary_url" {
+  value       = var.tfe_hostname_secondary != null ? "https://${var.tfe_hostname_secondary}" : null
+  description = "URL of the optional secondary TFE hostname."
+}
+
+output "tfe_secondary_public_ip_address" {
+  value       = try(azurerm_public_ip.tfe_lb_secondary[0].ip_address, null)
+  description = "Public IP address for the managed secondary TFE endpoint when enabled."
+}
+
 #------------------------------------------------------------------------------
 # Database
 #------------------------------------------------------------------------------
@@ -34,4 +44,3 @@ output "tfe_object_storage_azure_container_name" {
   value       = try(azurerm_storage_container.tfe[0].name, null)
   description = "Name of TFE Azure Storage Container."
 }
-

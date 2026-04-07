@@ -15,12 +15,19 @@ bootstrap_keyvault_name                    = "<bootstrap-keyvault-name>"
 bootstrap_keyvault_rg_name                 = "<bootstrap-keyvault-resource-group-name>"
 tfe_license_keyvault_secret_id             = "<https://tfe-license-keyvault-secret-id>"
 tfe_tls_cert_keyvault_secret_id            = "<https://tfe-cert-keyvault-secret-id>"
+tfe_tls_cert_keyvault_secret_id_secondary  = null
 tfe_tls_privkey_keyvault_secret_id         = "<https://tfe-private-key-keyvault-secret-id>"
+tfe_tls_privkey_keyvault_secret_id_secondary = null
 tfe_tls_ca_bundle_keyvault_secret_id       = "<https://tfe-custom-ca-bundle-keyvault-secret-id>"
+tfe_tls_ca_bundle_keyvault_secret_id_secondary = null
 tfe_encryption_password_keyvault_secret_id = "<https://tfe-encryption-password-keyvault-secret-id>"
 
 # --- TFE config settings --- #
 tfe_fqdn                 = "<tfe.azure.example.com>"
+tfe_hostname_secondary   = null
+tfe_oidc_hostname_choice = "<primary>"
+tfe_vcs_hostname_choice  = "<primary>"
+tfe_run_task_hostname_choice = "<primary>"
 tfe_image_tag            = "<v202502-1>"     # TFE version, refer to https://developer.hashicorp.com/terraform/enterprise/releases
 tfe_operational_mode     = "<active-active>" # `active-active` or `external`. refer to https://developer.hashicorp.com/validated-designs/terraform-solution-design-guides-terraform-enterprise/architecture#deployment-topologies
 tfe_capacity_concurrency = <10>              # Maximum number of Terraform runs that can execute concurrently on each Terraform Enterprise node. Defaults to 10.
@@ -40,6 +47,11 @@ db_subnet_id    = "<tfe-database-subnet-id>"
 redis_subnet_id = "<tfe-redis-subnet-id>"
 
 # --- DNS (optional) --- #
+create_tfe_public_dns_record           = <false>
+public_dns_zone_name                   = null
+public_dns_zone_rg_name                = null
+create_tfe_secondary_public_endpoint   = <false>
+create_tfe_secondary_public_dns_record = <false>
 create_tfe_private_dns_record = <true>
 private_dns_zone_name         = "<example.com>"
 private_dns_zone_rg_name      = "<private-dns-zone-resource-group-name>"

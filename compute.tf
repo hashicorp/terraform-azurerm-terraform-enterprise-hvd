@@ -33,26 +33,32 @@ locals {
   tfe_startup_script_tpl               = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_custom_data.sh.tpl"
   redis_port                           = var.tfe_redis_use_tls ? 6380 : 6379
   tfe_object_storage_azure_account_key = var.is_secondary_region ? data.azurerm_storage_account.tfe[0].primary_access_key : azurerm_storage_account.tfe[0].primary_access_key
+  tfe_hostname_secondary_enabled       = var.tfe_hostname_secondary != null
 
   custom_data_args = {
     # Bootstrap
-    tfe_license_keyvault_secret_id             = var.tfe_license_keyvault_secret_id
-    tfe_tls_cert_keyvault_secret_id            = var.tfe_tls_cert_keyvault_secret_id
-    tfe_tls_privkey_keyvault_secret_id         = var.tfe_tls_privkey_keyvault_secret_id
-    tfe_tls_ca_bundle_keyvault_secret_id       = var.tfe_tls_ca_bundle_keyvault_secret_id
-    tfe_encryption_password_keyvault_secret_id = var.tfe_encryption_password_keyvault_secret_id
-    tfe_image_repository_url                   = var.tfe_image_repository_url
-    tfe_image_repository_username              = var.tfe_image_repository_username
-    tfe_image_repository_password              = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
-    tfe_image_name                             = var.tfe_image_name
-    tfe_image_tag                              = var.tfe_image_tag
-    container_runtime                          = var.container_runtime
-    docker_version                             = var.docker_version
-    is_govcloud_region                         = var.is_govcloud_region
+    tfe_license_keyvault_secret_id                 = var.tfe_license_keyvault_secret_id
+    tfe_tls_cert_keyvault_secret_id                = var.tfe_tls_cert_keyvault_secret_id
+    tfe_tls_cert_keyvault_secret_id_secondary      = var.tfe_tls_cert_keyvault_secret_id_secondary == null ? "" : var.tfe_tls_cert_keyvault_secret_id_secondary
+    tfe_tls_privkey_keyvault_secret_id             = var.tfe_tls_privkey_keyvault_secret_id
+    tfe_tls_privkey_keyvault_secret_id_secondary   = var.tfe_tls_privkey_keyvault_secret_id_secondary == null ? "" : var.tfe_tls_privkey_keyvault_secret_id_secondary
+    tfe_tls_ca_bundle_keyvault_secret_id           = var.tfe_tls_ca_bundle_keyvault_secret_id
+    tfe_tls_ca_bundle_keyvault_secret_id_secondary = var.tfe_tls_ca_bundle_keyvault_secret_id_secondary == null ? "" : var.tfe_tls_ca_bundle_keyvault_secret_id_secondary
+    tfe_encryption_password_keyvault_secret_id     = var.tfe_encryption_password_keyvault_secret_id
+    tfe_image_repository_url                       = var.tfe_image_repository_url
+    tfe_image_repository_username                  = var.tfe_image_repository_username
+    tfe_image_repository_password                  = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
+    tfe_image_name                                 = var.tfe_image_name
+    tfe_image_tag                                  = var.tfe_image_tag
+    container_runtime                              = var.container_runtime
+    docker_version                                 = var.docker_version
+    is_govcloud_region                             = var.is_govcloud_region
 
     # https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration
     # TFE application settings
     tfe_hostname                  = var.tfe_fqdn
+    tfe_hostname_secondary        = var.tfe_hostname_secondary == null ? "" : var.tfe_hostname_secondary
+    tfe_oidc_hostname_choice      = var.tfe_oidc_hostname_choice
     tfe_operational_mode          = var.tfe_operational_mode
     tfe_capacity_concurrency      = var.tfe_capacity_concurrency
     tfe_capacity_cpu              = var.tfe_capacity_cpu
@@ -64,6 +70,8 @@ locals {
     tfe_node_id                   = ""
     tfe_http_port                 = var.tfe_http_port
     tfe_https_port                = var.tfe_https_port
+    tfe_run_task_hostname_choice  = var.tfe_run_task_hostname_choice
+    tfe_vcs_hostname_choice       = var.tfe_vcs_hostname_choice
 
     # Database settings
     tfe_database_host       = "${azurerm_postgresql_flexible_server.tfe.fqdn}:5432"
@@ -89,12 +97,14 @@ locals {
     tfe_redis_password = var.tfe_operational_mode == "active-active" && var.tfe_redis_use_auth ? "${azurerm_redis_cache.tfe[0].primary_access_key}" : ""
 
     # TLS settings
-    tfe_tls_cert_file      = "/etc/ssl/private/terraform-enterprise/cert.pem"
-    tfe_tls_key_file       = "/etc/ssl/private/terraform-enterprise/key.pem"
-    tfe_tls_ca_bundle_file = "/etc/ssl/private/terraform-enterprise/bundle.pem"
-    tfe_tls_enforce        = var.tfe_tls_enforce
-    tfe_tls_ciphers        = ""
-    tfe_tls_version        = ""
+    tfe_tls_cert_file           = "/etc/ssl/private/terraform-enterprise/cert.pem"
+    tfe_tls_cert_file_secondary = "/etc/ssl/private/terraform-enterprise/cert-secondary.pem"
+    tfe_tls_key_file            = "/etc/ssl/private/terraform-enterprise/key.pem"
+    tfe_tls_key_file_secondary  = "/etc/ssl/private/terraform-enterprise/key-secondary.pem"
+    tfe_tls_ca_bundle_file      = "/etc/ssl/private/terraform-enterprise/bundle.pem"
+    tfe_tls_enforce             = var.tfe_tls_enforce
+    tfe_tls_ciphers             = ""
+    tfe_tls_version             = ""
 
     # Observability settings
     tfe_log_forwarding_enabled     = var.tfe_log_forwarding_enabled

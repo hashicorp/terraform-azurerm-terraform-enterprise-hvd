@@ -124,6 +124,17 @@ function retrieve_certs_from_key_vault {
   az keyvault secret show --id "${tfe_tls_privkey_keyvault_secret_id}" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/key.pem
   log "INFO" "Retrieving TLS CA bundle '${tfe_tls_ca_bundle_keyvault_secret_id}' from Key Vault."
   az keyvault secret show --id "${tfe_tls_ca_bundle_keyvault_secret_id}" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/bundle.pem
+
+  if [[ -n "${tfe_hostname_secondary}" ]]; then
+    log "INFO" "Retrieving secondary TLS certificate '${tfe_tls_cert_keyvault_secret_id_secondary}' from Key Vault."
+    az keyvault secret show --id "${tfe_tls_cert_keyvault_secret_id_secondary}" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/cert-secondary.pem
+    log "INFO" "Retrieving secondary TLS private key '${tfe_tls_privkey_keyvault_secret_id_secondary}' from Key Vault."
+    az keyvault secret show --id "${tfe_tls_privkey_keyvault_secret_id_secondary}" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/key-secondary.pem
+    log "INFO" "Retrieving secondary TLS CA bundle '${tfe_tls_ca_bundle_keyvault_secret_id_secondary}' from Key Vault."
+    az keyvault secret show --id "${tfe_tls_ca_bundle_keyvault_secret_id_secondary}" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/bundle-secondary.pem
+    printf "\n" >> $TFE_TLS_CERTS_DIR/bundle.pem
+    cat $TFE_TLS_CERTS_DIR/bundle-secondary.pem >> $TFE_TLS_CERTS_DIR/bundle.pem
+  fi
 }
 
 function retrieve_license_from_key_vault {
@@ -174,6 +185,12 @@ services:
       TFE_NODE_ID: ${tfe_node_id}
       TFE_HTTP_PORT: ${tfe_http_port}
       TFE_HTTPS_PORT: ${tfe_https_port}
+%{ if tfe_hostname_secondary != "" ~}
+      TFE_HOSTNAME_SECONDARY: ${tfe_hostname_secondary}
+      TFE_OIDC_HOSTNAME_CHOICE: ${tfe_oidc_hostname_choice}
+      TFE_VCS_HOSTNAME_CHOICE: ${tfe_vcs_hostname_choice}
+      TFE_RUN_TASK_HOSTNAME_CHOICE: ${tfe_run_task_hostname_choice}
+%{ endif ~}
 
       # Database settings
       TFE_DATABASE_HOST: ${tfe_database_host}
@@ -209,6 +226,10 @@ services:
       TFE_TLS_CERT_FILE: ${tfe_tls_cert_file}
       TFE_TLS_KEY_FILE: ${tfe_tls_key_file}
       TFE_TLS_CA_BUNDLE_FILE: ${tfe_tls_ca_bundle_file}
+%{ if tfe_hostname_secondary != "" ~}
+      TFE_TLS_CERT_FILE_SECONDARY: ${tfe_tls_cert_file_secondary}
+      TFE_TLS_KEY_FILE_SECONDARY: ${tfe_tls_key_file_secondary}
+%{ endif ~}
       TFE_TLS_CIPHERS: ${tfe_tls_ciphers}
       TFE_TLS_ENFORCE: ${tfe_tls_enforce}
       TFE_TLS_VERSION: ${tfe_tls_version}
@@ -237,6 +258,9 @@ services:
 %{ if tfe_hairpin_addressing ~}
     extra_hosts:
       - ${tfe_hostname}:$VM_PRIVATE_IP
+%{ if tfe_hostname_secondary != "" ~}
+      - ${tfe_hostname_secondary}:$VM_PRIVATE_IP
+%{ endif ~}
 %{ endif ~}
     cap_add:
       - IPC_LOCK
@@ -295,6 +319,9 @@ spec:
     - ip: $VM_PRIVATE_IP
       hostnames:
         - "${tfe_hostname}"
+%{ if tfe_hostname_secondary != "" ~}
+        - "${tfe_hostname_secondary}"
+%{ endif ~}
 %{ endif ~}
   containers:
   - env:
@@ -329,6 +356,16 @@ spec:
       value: ${tfe_http_port}
     - name: "TFE_HTTPS_PORT"
       value: ${tfe_https_port}
+%{ if tfe_hostname_secondary != "" ~}
+    - name: "TFE_HOSTNAME_SECONDARY"
+      value: ${tfe_hostname_secondary}
+    - name: "TFE_OIDC_HOSTNAME_CHOICE"
+      value: ${tfe_oidc_hostname_choice}
+    - name: "TFE_VCS_HOSTNAME_CHOICE"
+      value: ${tfe_vcs_hostname_choice}
+    - name: "TFE_RUN_TASK_HOSTNAME_CHOICE"
+      value: ${tfe_run_task_hostname_choice}
+%{ endif ~}
 
     # Database settings
     - name: "TFE_DATABASE_HOST"
@@ -384,6 +421,12 @@ spec:
       value: ${tfe_tls_key_file}
     - name: "TFE_TLS_CA_BUNDLE_FILE"
       value: ${tfe_tls_ca_bundle_file}
+%{ if tfe_hostname_secondary != "" ~}
+    - name: "TFE_TLS_CERT_FILE_SECONDARY"
+      value: ${tfe_tls_cert_file_secondary}
+    - name: "TFE_TLS_KEY_FILE_SECONDARY"
+      value: ${tfe_tls_key_file_secondary}
+%{ endif ~}
     - name: "TFE_TLS_CIPHERS"
       value: ${tfe_tls_ciphers}
     - name: "TFE_TLS_ENFORCE"

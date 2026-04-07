@@ -43,6 +43,12 @@ Supported values:
 
 We recommend deploying an internal load balancer unless you have a specific use case where your TFE users/clients or VCS need to be able to reach your TFE instance from the Internet.
 
+#### Secondary hostname and managed public endpoint
+
+**Input variables:** `tfe_hostname_secondary`, `create_tfe_secondary_public_endpoint`, `create_tfe_secondary_public_dns_record`
+
+Set `tfe_hostname_secondary` when OIDC, VCS, or run task callbacks should use a different hostname than the primary `tfe_fqdn`. When you also set `create_tfe_secondary_public_endpoint = true`, the module adds a second public IP and Azure Load Balancer frontend on port `443` for that hostname. If you already manage the secondary DNS name outside the module, you can leave the managed endpoint disabled and point the hostname at your preferred IP yourself.
+
 ### Log forwarding
 
 **Input variable:** `tfe_log_forwarding_enabled` (bool)
