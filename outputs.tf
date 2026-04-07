@@ -14,6 +14,16 @@ output "tfe_admin_console_url_pattern" {
   description = "URL pattern to access the TFE Admin Console when it is enabled."
 }
 
+output "secondary_url" {
+  value       = var.tfe_hostname_secondary != null ? "https://${var.tfe_hostname_secondary}" : null
+  description = "URL of the optional secondary TFE hostname."
+}
+
+output "tfe_secondary_public_ip_address" {
+  value       = try(azurerm_public_ip.tfe_lb_secondary[0].ip_address, null)
+  description = "Public IP address for the managed secondary TFE endpoint when enabled."
+}
+
 #------------------------------------------------------------------------------
 # Database
 #------------------------------------------------------------------------------

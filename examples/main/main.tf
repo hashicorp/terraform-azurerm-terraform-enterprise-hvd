@@ -32,12 +32,19 @@ module "tfe" {
   use_key_vault_rbac                               = var.use_key_vault_rbac
   tfe_license_keyvault_secret_id                   = var.tfe_license_keyvault_secret_id
   tfe_tls_cert_keyvault_secret_id                  = var.tfe_tls_cert_keyvault_secret_id
+  tfe_tls_cert_keyvault_secret_id_secondary        = var.tfe_tls_cert_keyvault_secret_id_secondary
   tfe_tls_privkey_keyvault_secret_id               = var.tfe_tls_privkey_keyvault_secret_id
+  tfe_tls_privkey_keyvault_secret_id_secondary     = var.tfe_tls_privkey_keyvault_secret_id_secondary
   tfe_tls_ca_bundle_keyvault_secret_id             = var.tfe_tls_ca_bundle_keyvault_secret_id
+  tfe_tls_ca_bundle_keyvault_secret_id_secondary   = var.tfe_tls_ca_bundle_keyvault_secret_id_secondary
   tfe_encryption_password_keyvault_secret_id       = var.tfe_encryption_password_keyvault_secret_id
 
   # --- TFE config settings --- #
   tfe_fqdn                             = var.tfe_fqdn
+  tfe_hostname_secondary               = var.tfe_hostname_secondary
+  tfe_oidc_hostname_choice             = var.tfe_oidc_hostname_choice
+  tfe_vcs_hostname_choice              = var.tfe_vcs_hostname_choice
+  tfe_run_task_hostname_choice         = var.tfe_run_task_hostname_choice
   tfe_image_tag                        = var.tfe_image_tag
   tfe_hairpin_addressing               = var.tfe_hairpin_addressing
   tfe_capacity_concurrency             = var.tfe_capacity_concurrency
@@ -61,9 +68,14 @@ module "tfe" {
   redis_subnet_id = var.redis_subnet_id
 
   # --- DNS (optional) --- #
-  create_tfe_private_dns_record = var.create_tfe_private_dns_record
-  private_dns_zone_name         = var.private_dns_zone_name
-  private_dns_zone_rg_name      = var.private_dns_zone_rg_name
+  create_tfe_public_dns_record           = var.create_tfe_public_dns_record
+  public_dns_zone_name                   = var.public_dns_zone_name
+  public_dns_zone_rg_name                = var.public_dns_zone_rg_name
+  create_tfe_secondary_public_endpoint   = var.create_tfe_secondary_public_endpoint
+  create_tfe_secondary_public_dns_record = var.create_tfe_secondary_public_dns_record
+  create_tfe_private_dns_record          = var.create_tfe_private_dns_record
+  private_dns_zone_name                  = var.private_dns_zone_name
+  private_dns_zone_rg_name               = var.private_dns_zone_rg_name
 
   # --- Compute --- #
   vmss_instance_count = var.vmss_instance_count
