@@ -9,6 +9,11 @@ output "url" {
   description = "URL of TFE application based on `tfe_fqdn` input."
 }
 
+output "tfe_admin_console_url_pattern" {
+  value       = !var.tfe_admin_console_disabled ? "https://${var.tfe_fqdn}:${var.tfe_admin_https_port}" : null
+  description = "URL pattern to access the TFE Admin Console when it is enabled."
+}
+
 #------------------------------------------------------------------------------
 # Database
 #------------------------------------------------------------------------------
@@ -34,4 +39,3 @@ output "tfe_object_storage_azure_container_name" {
   value       = try(azurerm_storage_container.tfe[0].name, null)
   description = "Name of TFE Azure Storage Container."
 }
-

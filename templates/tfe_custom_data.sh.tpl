@@ -174,6 +174,10 @@ services:
       TFE_NODE_ID: ${tfe_node_id}
       TFE_HTTP_PORT: ${tfe_http_port}
       TFE_HTTPS_PORT: ${tfe_https_port}
+      TFE_ADMIN_HTTPS_PORT: ${tfe_admin_https_port}
+%{ if tfe_admin_console_disabled ~}
+      TFE_ADMIN_CONSOLE_DISABLED: "true"
+%{ endif ~}
 
       # Database settings
       TFE_DATABASE_HOST: ${tfe_database_host}
@@ -248,6 +252,7 @@ services:
     ports:
       - 80:${tfe_http_port}
       - 443:${tfe_https_port}
+      - ${tfe_admin_https_port}:${tfe_admin_https_port}
 %{ if tfe_operational_mode == "active-active" ~}
       - 8201:8201
 %{ endif ~}
@@ -329,6 +334,12 @@ spec:
       value: ${tfe_http_port}
     - name: "TFE_HTTPS_PORT"
       value: ${tfe_https_port}
+    - name: "TFE_ADMIN_HTTPS_PORT"
+      value: ${tfe_admin_https_port}
+%{ if tfe_admin_console_disabled ~}
+    - name: "TFE_ADMIN_CONSOLE_DISABLED"
+      value: "true"
+%{ endif ~}
 
     # Database settings
     - name: "TFE_DATABASE_HOST"
@@ -435,6 +446,8 @@ spec:
       hostPort: 80
     - containerPort: ${tfe_https_port}
       hostPort: 443
+    - containerPort: ${tfe_admin_https_port}
+      hostPort: ${tfe_admin_https_port}
     - containerPort: 8201
       hostPort: 8201
     securityContext:
@@ -623,8 +636,8 @@ function main {
   log "INFO" "Sleeping for a minute while TFE initializes..."
   sleep 60
 
-  log "INFO" "Polling TFE health check endpoint until the app becomes ready..."
-  while ! curl -ksfS --connect-timeout 5 https://$VM_PRIVATE_IP/_health_check; do
+  log "INFO" "Polling TFE health check endpoint '$tfe_health_check_path' until the app becomes ready..."
+  while ! curl -ksfS --connect-timeout 5 "https://$VM_PRIVATE_IP${tfe_health_check_path}"; do
     sleep 5
   done
 

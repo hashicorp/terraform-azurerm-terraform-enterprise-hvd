@@ -40,6 +40,18 @@ Here we must set the following boolean to false, and the module will automatical
 lb_is_internal = false
 ```
 
+### Admin console
+
+The TFE admin console is disabled by default. When you enable it, the module adds an Azure load balancer rule on `tfe_admin_https_port`, but you must still allow that port through the prerequisite NSGs or any external firewall policy yourself.
+
+```hcl
+tfe_admin_console_disabled           = false
+tfe_admin_https_port                 = 9443
+cidr_allow_ingress_tfe_admin_console = ["10.0.0.0/24"]
+```
+
+Use `cidr_allow_ingress_tfe_admin_console` as the source of truth for your prerequisite firewall configuration. For internal load balancers, only your trusted internal ranges should be able to reach the admin-console port. For external load balancers, the compute subnet path must allow only explicit admin CIDRs.
+
 ## DNS
 
 If you have an existing Azure DNS zone (public or private) that you would like this module to create a DNS record within for the TFE FQDN, the following input variables may be set. This is completely optional; you are free to create your own DNS record for the TFE FQDN resolving to the TFE load balancer IP address out-of-band from this module.

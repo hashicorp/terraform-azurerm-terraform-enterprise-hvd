@@ -30,6 +30,28 @@ locals {
 # Custom data (cloud-init) script arguments
 #------------------------------------------------------------------------------
 locals {
+  is_calver_tfe_image_tag  = can(regex("^v[0-9]{6}-[0-9]+$", var.tfe_image_tag))
+  normalized_tfe_image_tag = trimprefix(var.tfe_image_tag, "v")
+  is_semver_tfe_image_tag  = can(regex("^[0-9]+\\.[0-9]+(\\.[0-9]+)?$", local.normalized_tfe_image_tag))
+  tfe_image_tag_parts      = local.is_semver_tfe_image_tag ? split(".", local.normalized_tfe_image_tag) : []
+  tfe_image_tag_major      = local.is_semver_tfe_image_tag ? tonumber(local.tfe_image_tag_parts[0]) : 0
+  tfe_image_tag_minor      = local.is_semver_tfe_image_tag ? tonumber(local.tfe_image_tag_parts[1]) : 0
+  tfe_image_tag_patch      = local.is_semver_tfe_image_tag && length(local.tfe_image_tag_parts) > 2 ? tonumber(local.tfe_image_tag_parts[2]) : 0
+  tfe_readiness_uses_api = (
+    !local.is_calver_tfe_image_tag &&
+    (
+      !local.is_semver_tfe_image_tag ||
+      local.tfe_image_tag_major > 1 ||
+      (
+        local.tfe_image_tag_major == 1 &&
+        (
+          local.tfe_image_tag_minor > 2 ||
+          (local.tfe_image_tag_minor == 2 && local.tfe_image_tag_patch >= 1)
+        )
+      )
+    )
+  )
+  tfe_health_check_path                = local.tfe_readiness_uses_api ? "/api/v1/health/readiness" : "/_health_check"
   tfe_startup_script_tpl               = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_custom_data.sh.tpl"
   redis_port                           = var.tfe_redis_use_tls ? 6380 : 6379
   tfe_object_storage_azure_account_key = var.is_secondary_region ? data.azurerm_storage_account.tfe[0].primary_access_key : azurerm_storage_account.tfe[0].primary_access_key
@@ -64,6 +86,9 @@ locals {
     tfe_node_id                   = ""
     tfe_http_port                 = var.tfe_http_port
     tfe_https_port                = var.tfe_https_port
+    tfe_admin_https_port          = var.tfe_admin_https_port
+    tfe_admin_console_disabled    = var.tfe_admin_console_disabled
+    tfe_health_check_path         = local.tfe_health_check_path
 
     # Database settings
     tfe_database_host       = "${azurerm_postgresql_flexible_server.tfe.fqdn}:5432"

@@ -43,3 +43,5 @@ This module includes an input variable named `tfe_image_tag` that dicates which 
 1. From within the directory managing your TFE deployment, run `terraform apply` to update (re-image) the TFE VM(s) within your TFE VMSS.
 
 1. This process will effectively re-install TFE to the target version on the existing TFE VM(s) within your TFE VMSS. Ensure that the VM(s) have been updated (re-imaged) with the new changes. You can monitor the `tfe_custom_data` (cloud-init) script to ensure a successful re-install (see step 7 in the [Usage](../README.md#usage) section of the main README).
+
+>📝 Note: The module derives the Azure load balancer probe path from `tfe_image_tag`, so version changes that cross from calendar-versioned releases to newer semver-style releases automatically switch from `/_health_check` to `/api/v1/health/readiness`.

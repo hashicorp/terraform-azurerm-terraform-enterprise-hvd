@@ -223,6 +223,17 @@ variable "tfe_https_port" {
   }
 }
 
+variable "tfe_admin_https_port" {
+  type        = number
+  description = "Port the TFE application container listens on for system (admin) API endpoint HTTPS traffic."
+  default     = 9443
+
+  validation {
+    condition     = var.tfe_admin_https_port != var.tfe_https_port && var.tfe_admin_https_port != var.tfe_http_port
+    error_message = "`tfe_admin_https_port` must not be the same as `tfe_https_port` or `tfe_http_port` to avoid conflicts."
+  }
+}
+
 variable "tfe_run_pipeline_image" {
   type        = string
   description = "Name of the Docker image to use for the run pipeline driver."
@@ -245,6 +256,30 @@ variable "tfe_metrics_https_port" {
   type        = number
   description = "HTTPS port for TFE metrics endpoint."
   default     = 9091
+}
+
+variable "tfe_admin_console_disabled" {
+  type        = bool
+  description = "Boolean to disable the TFE Admin Console for advanced troubleshooting and diagnostics."
+  default     = true
+}
+
+variable "cidr_allow_ingress_tfe_admin_console" {
+  type        = list(string)
+  description = "List of CIDR ranges that should be allowed to reach the admin console port. This module does not create NSG rules, so use this as the contract for your prerequisite firewall policy."
+  default     = null
+
+  validation {
+    condition     = !var.tfe_admin_console_disabled ? var.cidr_allow_ingress_tfe_admin_console != null : true
+    error_message = "Value must be set when `tfe_admin_console_disabled` is `false`."
+  }
+
+  validation {
+    condition = var.cidr_allow_ingress_tfe_admin_console != null ? alltrue([
+      for cidr in var.cidr_allow_ingress_tfe_admin_console : can(cidrhost(cidr, 0))
+    ]) : true
+    error_message = "All values must be valid CIDR notation."
+  }
 }
 
 variable "tfe_tls_enforce" {
