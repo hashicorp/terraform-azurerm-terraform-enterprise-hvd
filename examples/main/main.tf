@@ -26,13 +26,14 @@ module "tfe" {
   is_govcloud_region    = var.is_govcloud_region
 
   # --- Bootstrap --- #
-  bootstrap_keyvault_name                    = var.bootstrap_keyvault_name
-  bootstrap_keyvault_rg_name                 = var.bootstrap_keyvault_rg_name
-  tfe_license_keyvault_secret_id             = var.tfe_license_keyvault_secret_id
-  tfe_tls_cert_keyvault_secret_id            = var.tfe_tls_cert_keyvault_secret_id
-  tfe_tls_privkey_keyvault_secret_id         = var.tfe_tls_privkey_keyvault_secret_id
-  tfe_tls_ca_bundle_keyvault_secret_id       = var.tfe_tls_ca_bundle_keyvault_secret_id
-  tfe_encryption_password_keyvault_secret_id = var.tfe_encryption_password_keyvault_secret_id
+  bootstrap_keyvault_name                          = var.bootstrap_keyvault_name
+  bootstrap_keyvault_rg_name                       = var.bootstrap_keyvault_rg_name
+  bootstrap_keyvault_create_reader_role_assignment = var.bootstrap_keyvault_create_reader_role_assignment
+  tfe_license_keyvault_secret_id                   = var.tfe_license_keyvault_secret_id
+  tfe_tls_cert_keyvault_secret_id                  = var.tfe_tls_cert_keyvault_secret_id
+  tfe_tls_privkey_keyvault_secret_id               = var.tfe_tls_privkey_keyvault_secret_id
+  tfe_tls_ca_bundle_keyvault_secret_id             = var.tfe_tls_ca_bundle_keyvault_secret_id
+  tfe_encryption_password_keyvault_secret_id       = var.tfe_encryption_password_keyvault_secret_id
 
   # --- TFE config settings --- #
   tfe_fqdn                             = var.tfe_fqdn

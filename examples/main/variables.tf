@@ -98,6 +98,12 @@ variable "bootstrap_keyvault_rg_name" {
   description = "Name of the Resource Group where the 'bootstrap' Key Vault resides."
 }
 
+variable "bootstrap_keyvault_create_reader_role_assignment" {
+  type        = bool
+  description = "Boolean to create an Azure RBAC Reader role assignment on the bootstrap Key Vault for the TFE user-assigned identity. Disable this when Key Vault access policies are sufficient and the deploying principal cannot write role assignments."
+  default     = true
+}
+
 variable "tfe_license_keyvault_secret_id" {
   type        = string
   description = "ID of Key Vault secret containing TFE license."
