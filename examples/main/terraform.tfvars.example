@@ -29,6 +29,7 @@ tfe_capacity_memory      = <2048>            # Maximum amount of memory (MiB) a 
 tfe_metrics_enable       = <false>
 tfe_metrics_http_port    = <9090>
 tfe_metrics_https_port   = <9091>
+tfe_explorer_enabled     = <false>
 
 # --- Networking --- #
 vnet_id         = "<tfe-vnet-id>"
@@ -60,6 +61,11 @@ postgres_geo_redundant_backup_enabled      = <true>
 postgres_administrator_login               = "<tfeadmin>"
 tfe_database_name                          = "<tfe>"
 tfe_database_parameters                    = "<sslmode=require>"
+tfe_explorer_database_host                 = null # set Explorer host, name, user, and password secret together, or leave all null to reuse the primary TFE database for non-production use
+tfe_explorer_database_name                 = null
+tfe_explorer_database_user                 = null
+tfe_explorer_database_password_keyvault_secret_id = null
+tfe_explorer_database_parameters           = null
 postgres_version                           = "16"
 postgres_sku                               = "<GP_Standard_D4ds_v4>"
 

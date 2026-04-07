@@ -9,6 +9,11 @@ output "url" {
   description = "URL of TFE application based on `tfe_fqdn` input."
 }
 
+output "tfe_explorer_database_warning" {
+  value       = var.tfe_explorer_enabled && local.tfe_explorer_uses_primary_database ? "Explorer is enabled and reuses the primary TFE PostgreSQL database. This fallback is intended for non-production use." : null
+  description = "Warning emitted when Explorer reuses the primary TFE database."
+}
+
 #------------------------------------------------------------------------------
 # Database
 #------------------------------------------------------------------------------
@@ -34,4 +39,3 @@ output "tfe_object_storage_azure_container_name" {
   value       = try(azurerm_storage_container.tfe[0].name, null)
   description = "Name of TFE Azure Storage Container."
 }
-

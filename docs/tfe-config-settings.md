@@ -13,3 +13,10 @@ The [Terraform Enterprise Flexible Deployment Options configuration reference](h
 Within the [compute.tf](../compute.tf) file, you will see a `locals` block with a map inside of it called `custom_data_args`. Almost all of the TFE configuration settings are passed from here into the [tfe_custom_data.sh](../templates/tfe_custom_data.sh.tpl) script.
 
 Within the [tfe_custom_data.sh](../templates/tfe_custom_data.sh.tpl) script there is a function named `generate_tfe_docker_compose` that is responsible for receiving all of those inputs and dynamically generating the `docker-compose.yaml` file. After a successful install process, this can be found on your TFE VM(s) within `/etc/tfe/docker-compose.yaml`.
+
+## Explorer settings
+
+When `tfe_explorer_enabled` is `true`, the module renders `TFE_EXPLORER_DATABASE_*` settings into the generated Docker Compose and Podman manifests. The effective Explorer database connection is computed in `compute.tf`:
+
+- dedicated Explorer connection when all Explorer database inputs are supplied
+- fallback to the primary TFE PostgreSQL connection when Explorer is enabled and dedicated Explorer DB inputs are omitted
