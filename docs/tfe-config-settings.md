@@ -35,3 +35,10 @@ The module derives the Redis topology from `tfe_image_tag` as well:
 - Semver releases `>= 1.0.1` switch to Azure Managed Redis and render separate Redis endpoints for the main application and Sidekiq because Azure Managed Redis does not support numbered databases.
 
 When the Managed Redis path is active, the generated runtime configuration includes both the standard `TFE_REDIS_*` settings and the matching `TFE_REDIS_SIDEKIQ_*` settings.
+
+## Explorer settings
+
+When `tfe_explorer_enabled` is `true`, the module renders `TFE_EXPLORER_DATABASE_*` settings into the generated Docker Compose and Podman manifests. The effective Explorer database connection is computed in `compute.tf`:
+
+- dedicated Explorer connection when all Explorer database inputs are supplied
+- fallback to the primary TFE PostgreSQL connection when Explorer is enabled and dedicated Explorer DB inputs are omitted
