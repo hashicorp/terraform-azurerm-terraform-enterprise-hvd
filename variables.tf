@@ -247,6 +247,50 @@ variable "tfe_metrics_https_port" {
   default     = 9091
 }
 
+variable "tfe_explorer_enabled" {
+  type        = bool
+  description = "Boolean to enable Terraform Enterprise Explorer."
+  default     = false
+}
+
+variable "tfe_explorer_database_host" {
+  type        = string
+  description = "PostgreSQL server for Explorer in `HOST[:PORT]` format. Leave as `null` to reuse the primary TFE database for non-production use."
+  default     = null
+
+  validation {
+    condition = !var.tfe_explorer_enabled || (
+      (var.tfe_explorer_database_host == null && var.tfe_explorer_database_name == null && var.tfe_explorer_database_user == null && var.tfe_explorer_database_password_keyvault_secret_id == null) ||
+      (var.tfe_explorer_database_host != null && var.tfe_explorer_database_name != null && var.tfe_explorer_database_user != null && var.tfe_explorer_database_password_keyvault_secret_id != null)
+    )
+    error_message = "Explorer database host, name, user, and password secret must either all be set or all be null when Explorer is enabled."
+  }
+}
+
+variable "tfe_explorer_database_name" {
+  type        = string
+  description = "Name of the PostgreSQL database used by Explorer. Leave as `null` to reuse the primary TFE database for non-production use."
+  default     = null
+}
+
+variable "tfe_explorer_database_user" {
+  type        = string
+  description = "PostgreSQL username used by Explorer. Leave as `null` to reuse the primary TFE database for non-production use."
+  default     = null
+}
+
+variable "tfe_explorer_database_password_keyvault_secret_id" {
+  type        = string
+  description = "ID of the Key Vault secret containing the Explorer database password. Leave as `null` to reuse the primary TFE database password for non-production use."
+  default     = null
+}
+
+variable "tfe_explorer_database_parameters" {
+  type        = string
+  description = "PostgreSQL server parameters for the Explorer connection URI. Leave as `null` to reuse `tfe_database_parameters`."
+  default     = null
+}
+
 variable "tfe_tls_enforce" {
   type        = bool
   description = "Boolean to enforce TLS, Strict-Transport-Security headers, and secure cookies within TFE."

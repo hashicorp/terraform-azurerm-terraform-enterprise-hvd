@@ -30,6 +30,7 @@ locals {
 # Custom data (cloud-init) script arguments
 #------------------------------------------------------------------------------
 locals {
+  tfe_explorer_uses_primary_database   = var.tfe_explorer_enabled && var.tfe_explorer_database_host == null
   tfe_startup_script_tpl               = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_custom_data.sh.tpl"
   redis_port                           = var.tfe_redis_use_tls ? 6380 : 6379
   tfe_object_storage_azure_account_key = var.is_secondary_region ? data.azurerm_storage_account.tfe[0].primary_access_key : azurerm_storage_account.tfe[0].primary_access_key
@@ -71,6 +72,19 @@ locals {
     tfe_database_user       = azurerm_postgresql_flexible_server.tfe.administrator_login
     tfe_database_password   = azurerm_postgresql_flexible_server.tfe.administrator_password
     tfe_database_parameters = var.tfe_database_parameters
+    tfe_explorer_enabled    = var.tfe_explorer_enabled
+    tfe_explorer_database_host = var.tfe_explorer_enabled ? (
+      local.tfe_explorer_uses_primary_database ? "${azurerm_postgresql_flexible_server.tfe.fqdn}:5432" : var.tfe_explorer_database_host
+    ) : ""
+    tfe_explorer_database_name = var.tfe_explorer_enabled ? (
+      local.tfe_explorer_uses_primary_database ? var.tfe_database_name : var.tfe_explorer_database_name
+    ) : ""
+    tfe_explorer_database_user = var.tfe_explorer_enabled ? (
+      local.tfe_explorer_uses_primary_database ? azurerm_postgresql_flexible_server.tfe.administrator_login : var.tfe_explorer_database_user
+    ) : ""
+    tfe_explorer_database_password                    = var.tfe_explorer_enabled && local.tfe_explorer_uses_primary_database ? azurerm_postgresql_flexible_server.tfe.administrator_password : ""
+    tfe_explorer_database_password_keyvault_secret_id = var.tfe_explorer_enabled && !local.tfe_explorer_uses_primary_database ? coalesce(var.tfe_explorer_database_password_keyvault_secret_id, "") : ""
+    tfe_explorer_database_parameters                  = var.tfe_explorer_enabled ? coalesce(var.tfe_explorer_database_parameters, var.tfe_database_parameters) : ""
 
 
     # Object storage settings

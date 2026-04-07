@@ -151,6 +151,8 @@ One of the following logging destinations for the TFE container logs:
 
 1. Follow the steps to [create the TFE initial admin user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user).
 
+>📝 Note: Explorer can be enabled with a dedicated PostgreSQL connection, or by reusing the primary TFE PostgreSQL database for non-production use.
+
 ## Docs
 
 Below are links to various docs related to the customization and management of your TFE deployment:
@@ -315,6 +317,12 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_tfe_capacity_memory"></a> [tfe\_capacity\_memory](#input\_tfe\_capacity\_memory) | Amount of memory in MB for TFE. | `number` | `2048` | no |
 | <a name="input_tfe_database_name"></a> [tfe\_database\_name](#input\_tfe\_database\_name) | PostgreSQL database name for TFE. | `string` | `"tfe"` | no |
 | <a name="input_tfe_database_parameters"></a> [tfe\_database\_parameters](#input\_tfe\_database\_parameters) | PostgreSQL server parameters for the connection URI. Used to configure the PostgreSQL connection. | `string` | `"sslmode=require"` | no |
+| <a name="input_tfe_explorer_database_host"></a> [tfe\_explorer\_database\_host](#input\_tfe\_explorer\_database\_host) | PostgreSQL server for Explorer in `HOST[:PORT]` format. Leave as `null` to reuse the primary TFE database for non-production use. | `string` | `null` | no |
+| <a name="input_tfe_explorer_database_name"></a> [tfe\_explorer\_database\_name](#input\_tfe\_explorer\_database\_name) | Name of the PostgreSQL database used by Explorer. Leave as `null` to reuse the primary TFE database for non-production use. | `string` | `null` | no |
+| <a name="input_tfe_explorer_database_parameters"></a> [tfe\_explorer\_database\_parameters](#input\_tfe\_explorer\_database\_parameters) | PostgreSQL server parameters for the Explorer connection URI. Leave as `null` to reuse `tfe_database_parameters`. | `string` | `null` | no |
+| <a name="input_tfe_explorer_database_password_keyvault_secret_id"></a> [tfe\_explorer\_database\_password\_keyvault\_secret\_id](#input\_tfe\_explorer\_database\_password\_keyvault\_secret\_id) | ID of the Key Vault secret containing the Explorer database password. Leave as `null` to reuse the primary TFE database password for non-production use. | `string` | `null` | no |
+| <a name="input_tfe_explorer_database_user"></a> [tfe\_explorer\_database\_user](#input\_tfe\_explorer\_database\_user) | PostgreSQL username used by Explorer. Leave as `null` to reuse the primary TFE database for non-production use. | `string` | `null` | no |
+| <a name="input_tfe_explorer_enabled"></a> [tfe\_explorer\_enabled](#input\_tfe\_explorer\_enabled) | Boolean to enable Terraform Enterprise Explorer. | `bool` | `false` | no |
 | <a name="input_tfe_hairpin_addressing"></a> [tfe\_hairpin\_addressing](#input\_tfe\_hairpin\_addressing) | Boolean to enable hairpin addressing for layer 4 load balancer with loopback prevention. Must be `true` when `lb_is_internal` is `true`. | `bool` | `true` | no |
 | <a name="input_tfe_http_port"></a> [tfe\_http\_port](#input\_tfe\_http\_port) | HTTP port for TFE application containers to listen on. | `number` | `8080` | no |
 | <a name="input_tfe_https_port"></a> [tfe\_https\_port](#input\_tfe\_https\_port) | HTTPS port for TFE application containers to listen on. | `number` | `8443` | no |
@@ -356,6 +364,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 |------|-------------|
 | <a name="output_tfe_database_host"></a> [tfe\_database\_host](#output\_tfe\_database\_host) | FQDN and port of PostgreSQL Flexible Server. |
 | <a name="output_tfe_database_name"></a> [tfe\_database\_name](#output\_tfe\_database\_name) | Name of PostgreSQL Flexible Server database. |
+| <a name="output_tfe_explorer_database_warning"></a> [tfe\_explorer\_database\_warning](#output\_tfe\_explorer\_database\_warning) | Warning emitted when Explorer reuses the primary TFE database. |
 | <a name="output_tfe_object_storage_azure_account_name"></a> [tfe\_object\_storage\_azure\_account\_name](#output\_tfe\_object\_storage\_azure\_account\_name) | Name of primary TFE Azure Storage Account. |
 | <a name="output_tfe_object_storage_azure_container_name"></a> [tfe\_object\_storage\_azure\_container\_name](#output\_tfe\_object\_storage\_azure\_container\_name) | Name of TFE Azure Storage Container. |
 | <a name="output_url"></a> [url](#output\_url) | URL of TFE application based on `tfe_fqdn` input. |

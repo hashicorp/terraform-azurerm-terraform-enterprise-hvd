@@ -181,6 +181,13 @@ services:
       TFE_DATABASE_USER: ${tfe_database_user}
       TFE_DATABASE_PASSWORD: ${tfe_database_password}
       TFE_DATABASE_PARAMETERS: ${tfe_database_parameters}
+%{ if tfe_explorer_enabled ~}
+      TFE_EXPLORER_DATABASE_HOST: ${tfe_explorer_database_host}
+      TFE_EXPLORER_DATABASE_NAME: ${tfe_explorer_database_name}
+      TFE_EXPLORER_DATABASE_USER: ${tfe_explorer_database_user}
+      TFE_EXPLORER_DATABASE_PARAMETERS: ${tfe_explorer_database_parameters}
+      TFE_EXPLORER_DATABASE_PASSWORD: $TFE_EXPLORER_DATABASE_PASSWORD
+%{ endif ~}
 
       # Object storage settings
       TFE_OBJECT_STORAGE_TYPE: ${tfe_object_storage_type}
@@ -341,6 +348,18 @@ spec:
       value: ${tfe_database_password}
     - name: "TFE_DATABASE_USER"
       value: ${tfe_database_user}
+%{ if tfe_explorer_enabled ~}
+    - name: "TFE_EXPLORER_DATABASE_HOST"
+      value: ${tfe_explorer_database_host}
+    - name: "TFE_EXPLORER_DATABASE_NAME"
+      value: ${tfe_explorer_database_name}
+    - name: "TFE_EXPLORER_DATABASE_USER"
+      value: ${tfe_explorer_database_user}
+    - name: "TFE_EXPLORER_DATABASE_PARAMETERS"
+      value: ${tfe_explorer_database_parameters}
+    - name: "TFE_EXPLORER_DATABASE_PASSWORD"
+      value: $TFE_EXPLORER_DATABASE_PASSWORD
+%{ endif ~}
 
     # Object storage settings
     - name: "TFE_OBJECT_STORAGE_TYPE"
@@ -587,6 +606,16 @@ function main {
 
   log "INFO" "Retrieving 'TFE_ENCRYPTION_PASSWORD' from Key Vault secret ${tfe_encryption_password_keyvault_secret_id}..."
   TFE_ENCRYPTION_PASSWORD=$(retrieve_secret_from_key_vault "${tfe_encryption_password_keyvault_secret_id}")
+
+  if [[ "${tfe_explorer_enabled}" == "true" ]]; then
+    if [[ -n "${tfe_explorer_database_password_keyvault_secret_id}" ]]; then
+      log "INFO" "Retrieving Explorer database password from Key Vault secret ${tfe_explorer_database_password_keyvault_secret_id}..."
+      TFE_EXPLORER_DATABASE_PASSWORD=$(retrieve_secret_from_key_vault "${tfe_explorer_database_password_keyvault_secret_id}")
+    else
+      log "INFO" "Explorer is reusing the primary TFE database password."
+      TFE_EXPLORER_DATABASE_PASSWORD="${tfe_explorer_database_password}"
+    fi
+  fi
 
   if [[ "${tfe_log_forwarding_enabled}" == "true" ]]; then
     log "INFO" "Generating '$TFE_LOG_FORWARDING_CONFIG_PATH' file for TFE log forwarding via Fluent Bit."

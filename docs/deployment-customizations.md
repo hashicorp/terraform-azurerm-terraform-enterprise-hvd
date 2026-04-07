@@ -98,6 +98,32 @@ tfe_metrics_https_port = 9091
 
 >📝 Note: Ensure your have NSG/firwall rules in place to allow `TCP/9090` or `TCP/9091` ingress to your TFE VM subnet.
 
+## Explorer
+
+Explorer is disabled by default. When enabled, you can either point it at a dedicated PostgreSQL database or leave all Explorer database inputs as `null` to reuse the primary TFE PostgreSQL database for non-production use.
+
+```hcl
+tfe_explorer_enabled                         = true
+tfe_explorer_database_host                   = "my-explorer-db.postgres.database.azure.com:5432"
+tfe_explorer_database_name                   = "tfeexplorer"
+tfe_explorer_database_user                   = "exploreradmin"
+tfe_explorer_database_password_keyvault_secret_id = "https://my-kv.vault.azure.net/secrets/explorer-password/..."
+tfe_explorer_database_parameters             = "sslmode=require"
+```
+
+For non-production environments:
+
+```hcl
+tfe_explorer_enabled                         = true
+tfe_explorer_database_host                   = null
+tfe_explorer_database_name                   = null
+tfe_explorer_database_user                   = null
+tfe_explorer_database_password_keyvault_secret_id = null
+tfe_explorer_database_parameters             = null
+```
+
+When you use the fallback mode, the module emits `tfe_explorer_database_warning` so the shared-database configuration remains visible in Terraform outputs.
+
 ## Custom VM image
 
 If a custom VM image is preferred over using a standard marketplace image, the following variables may be set:

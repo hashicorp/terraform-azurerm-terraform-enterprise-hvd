@@ -56,3 +56,13 @@ Supported values:
 Supported values:
 - `log_analytics` - sets a Log Analytics workspace; `log_analytics_workspace_name` is also required
 - `custom` - sets a custom logging destination; specify your own custom FluentBit config via `custom_fluent_bit_config`
+
+### Explorer
+
+**Input variable:** `tfe_explorer_enabled`
+
+Supported values:
+- `false` - default
+- `true` - enables Terraform Enterprise Explorer
+
+When Explorer is enabled, either set the Explorer database inputs to a dedicated PostgreSQL connection and Key Vault password secret, or leave them all `null` to reuse the primary TFE database in non-production environments.
