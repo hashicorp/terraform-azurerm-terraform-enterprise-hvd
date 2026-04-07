@@ -5,7 +5,7 @@
 # DNS zone lookup
 #------------------------------------------------------------------------------
 data "azurerm_dns_zone" "tfe" {
-  count = var.create_tfe_public_dns_record && var.public_dns_zone_name != null ? 1 : 0
+  count = (var.create_tfe_public_dns_record || var.create_tfe_secondary_public_dns_record) && var.public_dns_zone_name != null ? 1 : 0
 
   name                = var.public_dns_zone_name
   resource_group_name = var.public_dns_zone_rg_name
@@ -22,8 +22,9 @@ data "azurerm_private_dns_zone" "tfe" {
 # DNS A record
 #------------------------------------------------------------------------------
 locals {
-  tfe_hostname_public  = var.create_tfe_public_dns_record && var.public_dns_zone_name != null ? trimsuffix(substr(var.tfe_fqdn, 0, length(var.tfe_fqdn) - length(var.public_dns_zone_name) - 1), ".") : var.tfe_fqdn
-  tfe_hostname_private = var.create_tfe_private_dns_record && var.private_dns_zone_name != null ? trim(split(var.private_dns_zone_name, var.tfe_fqdn)[0], ".") : var.tfe_fqdn
+  tfe_hostname_public           = var.create_tfe_public_dns_record && var.public_dns_zone_name != null ? trimsuffix(substr(var.tfe_fqdn, 0, length(var.tfe_fqdn) - length(var.public_dns_zone_name) - 1), ".") : var.tfe_fqdn
+  tfe_hostname_secondary_public = var.create_tfe_secondary_public_dns_record && var.public_dns_zone_name != null ? trimsuffix(substr(var.tfe_hostname_secondary, 0, length(var.tfe_hostname_secondary) - length(var.public_dns_zone_name) - 1), ".") : var.tfe_hostname_secondary
+  tfe_hostname_private          = var.create_tfe_private_dns_record && var.private_dns_zone_name != null ? trim(split(var.private_dns_zone_name, var.tfe_fqdn)[0], ".") : var.tfe_fqdn
 }
 
 resource "azurerm_dns_a_record" "tfe" {
@@ -35,6 +36,17 @@ resource "azurerm_dns_a_record" "tfe" {
   ttl                 = 300
   records             = var.lb_is_internal ? [azurerm_lb.tfe[0].private_ip_address] : null
   target_resource_id  = !var.lb_is_internal ? azurerm_public_ip.tfe_lb[0].id : null
+  tags                = var.common_tags
+}
+
+resource "azurerm_dns_a_record" "tfe_secondary" {
+  count = var.create_tfe_secondary_public_dns_record && var.public_dns_zone_name != null && var.create_tfe_secondary_public_endpoint ? 1 : 0
+
+  name                = local.tfe_hostname_secondary_public
+  resource_group_name = var.public_dns_zone_rg_name
+  zone_name           = data.azurerm_dns_zone.tfe[0].name
+  ttl                 = 300
+  target_resource_id  = azurerm_public_ip.tfe_lb_secondary[0].id
   tags                = var.common_tags
 }
 

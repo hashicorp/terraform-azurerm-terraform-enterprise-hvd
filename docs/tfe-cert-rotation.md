@@ -1,6 +1,6 @@
 # TFE Certificate Rotation
 
-A required prerequisite to deploying this module is storing a base64-encoded string of your TFE TLS certificate file (PEM format) and a base64-encoded string of your TFE TLS certificate private key file (PEM format) in an Azure Key Vault for bootstrapping purposes. The steps to rotate these certificates are simply to update these two secrets within your "bootstrap" Azure Key Vault, update the applicable module input variables with the new Key Vault secret identifiers, and then replace/re-image the VM(s) within your TFE virtual machine scale set (VMSS).
+A required prerequisite to deploying this module is storing a base64-encoded string of your TFE TLS certificate file (PEM format) and a base64-encoded string of your TFE TLS certificate private key file (PEM format) in an Azure Key Vault for bootstrapping purposes. The steps to rotate these certificates are simply to update these secrets within your "bootstrap" Azure Key Vault, update the applicable module input variables with the new Key Vault secret identifiers, and then replace/re-image the VM(s) within your TFE virtual machine scale set (VMSS). If you use `tfe_hostname_secondary`, repeat the same process for the `*_secondary` TLS secret inputs as well.
 
 ## Procedure
 
@@ -46,8 +46,10 @@ A required prerequisite to deploying this module is storing a base64-encoded str
 1. Update the following input variable values within your `terraform.tfvars` file with the new Key Vault secret identifiers:
 
     ```hcl
-    tfe_tls_cert_keyvault_secret_id    = "<https://new-tfe-cert-key-vault-secret-identifier>"
-    tfe_tls_privkey_keyvault_secret_id = "<https://new-tfe-privkey-key-vault-secret-identifier>"
+    tfe_tls_cert_keyvault_secret_id              = "<https://new-tfe-cert-key-vault-secret-identifier>"
+    tfe_tls_privkey_keyvault_secret_id           = "<https://new-tfe-privkey-key-vault-secret-identifier>"
+    tfe_tls_cert_keyvault_secret_id_secondary    = "<https://new-tfe-secondary-cert-key-vault-secret-identifier>"    # optional
+    tfe_tls_privkey_keyvault_secret_id_secondary = "<https://new-tfe-secondary-privkey-key-vault-secret-identifier>" # optional
     ```
 
 1. During a maintenance window, run `terraform apply` against your root Terraform configuration that manages your TFE deployment.

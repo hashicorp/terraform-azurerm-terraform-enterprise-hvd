@@ -13,3 +13,16 @@ The [Terraform Enterprise Flexible Deployment Options configuration reference](h
 Within the [compute.tf](../compute.tf) file, you will see a `locals` block with a map inside of it called `custom_data_args`. Almost all of the TFE configuration settings are passed from here into the [tfe_custom_data.sh](../templates/tfe_custom_data.sh.tpl) script.
 
 Within the [tfe_custom_data.sh](../templates/tfe_custom_data.sh.tpl) script there is a function named `generate_tfe_docker_compose` that is responsible for receiving all of those inputs and dynamically generating the `docker-compose.yaml` file. After a successful install process, this can be found on your TFE VM(s) within `/etc/tfe/docker-compose.yaml`.
+
+## Secondary hostname support
+
+This module can also render the TFE secondary-hostname settings when `tfe_hostname_secondary` is set. The bootstrap template writes the following configuration values into the runtime manifest for Docker and Podman:
+
+- `TFE_HOSTNAME_SECONDARY`
+- `TFE_OIDC_HOSTNAME_CHOICE`
+- `TFE_VCS_HOSTNAME_CHOICE`
+- `TFE_RUN_TASK_HOSTNAME_CHOICE`
+- `TFE_TLS_CERT_FILE_SECONDARY`
+- `TFE_TLS_KEY_FILE_SECONDARY`
+
+The secondary certificate, private key, and CA bundle are retrieved from Azure Key Vault using the `*_secondary` secret ID inputs and the secondary CA bundle is appended to the primary bundle so both trust chains are available to TFE.

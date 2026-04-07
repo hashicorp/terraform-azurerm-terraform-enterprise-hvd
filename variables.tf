@@ -108,14 +108,47 @@ variable "tfe_tls_cert_keyvault_secret_id" {
   description = "ID of Key Vault secret containing TFE TLS certificate."
 }
 
+variable "tfe_tls_cert_keyvault_secret_id_secondary" {
+  type        = string
+  description = "ID of Key Vault secret containing the secondary TFE TLS certificate."
+  default     = null
+
+  validation {
+    condition     = var.tfe_hostname_secondary != null ? var.tfe_tls_cert_keyvault_secret_id_secondary != null : var.tfe_tls_cert_keyvault_secret_id_secondary == null
+    error_message = "Value must be set when `tfe_hostname_secondary` is configured and must be null otherwise."
+  }
+}
+
 variable "tfe_tls_privkey_keyvault_secret_id" {
   type        = string
   description = "ID of Key Vault secret containing TFE TLS private key."
 }
 
+variable "tfe_tls_privkey_keyvault_secret_id_secondary" {
+  type        = string
+  description = "ID of Key Vault secret containing the secondary TFE TLS private key."
+  default     = null
+
+  validation {
+    condition     = var.tfe_hostname_secondary != null ? var.tfe_tls_privkey_keyvault_secret_id_secondary != null : var.tfe_tls_privkey_keyvault_secret_id_secondary == null
+    error_message = "Value must be set when `tfe_hostname_secondary` is configured and must be null otherwise."
+  }
+}
+
 variable "tfe_tls_ca_bundle_keyvault_secret_id" {
   type        = string
   description = "ID of Key Vault secret containing TFE TLS custom CA bundle."
+}
+
+variable "tfe_tls_ca_bundle_keyvault_secret_id_secondary" {
+  type        = string
+  description = "ID of Key Vault secret containing the secondary TFE TLS custom CA bundle."
+  default     = null
+
+  validation {
+    condition     = var.tfe_hostname_secondary != null ? var.tfe_tls_ca_bundle_keyvault_secret_id_secondary != null : var.tfe_tls_ca_bundle_keyvault_secret_id_secondary == null
+    error_message = "Value must be set when `tfe_hostname_secondary` is configured and must be null otherwise."
+  }
 }
 
 variable "tfe_encryption_password_keyvault_secret_id" {
@@ -164,6 +197,60 @@ variable "tfe_image_repository_password" {
 variable "tfe_fqdn" {
   type        = string
   description = "Fully qualified domain name of TFE instance. This name should resolve to the load balancer IP address and will be what clients use to access TFE."
+}
+
+variable "tfe_hostname_secondary" {
+  type        = string
+  description = "Secondary externally resolvable fully qualified domain name for TFE integration traffic such as OIDC, VCS, or run tasks."
+  default     = null
+}
+
+variable "tfe_oidc_hostname_choice" {
+  type        = string
+  description = "Hostname choice for TFE OIDC integrations. Supported values are `primary` and `secondary`."
+  default     = "primary"
+
+  validation {
+    condition     = contains(["primary", "secondary"], var.tfe_oidc_hostname_choice)
+    error_message = "Supported values are `primary` or `secondary`."
+  }
+
+  validation {
+    condition     = var.tfe_oidc_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null : true
+    error_message = "`tfe_hostname_secondary` must be set when `tfe_oidc_hostname_choice` is `secondary`."
+  }
+}
+
+variable "tfe_vcs_hostname_choice" {
+  type        = string
+  description = "Hostname choice for TFE VCS integrations. Supported values are `primary` and `secondary`."
+  default     = "primary"
+
+  validation {
+    condition     = contains(["primary", "secondary"], var.tfe_vcs_hostname_choice)
+    error_message = "Supported values are `primary` or `secondary`."
+  }
+
+  validation {
+    condition     = var.tfe_vcs_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null : true
+    error_message = "`tfe_hostname_secondary` must be set when `tfe_vcs_hostname_choice` is `secondary`."
+  }
+}
+
+variable "tfe_run_task_hostname_choice" {
+  type        = string
+  description = "Hostname choice for TFE run task integrations. Supported values are `primary` and `secondary`."
+  default     = "primary"
+
+  validation {
+    condition     = contains(["primary", "secondary"], var.tfe_run_task_hostname_choice)
+    error_message = "Supported values are `primary` or `secondary`."
+  }
+
+  validation {
+    condition     = var.tfe_run_task_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null : true
+    error_message = "`tfe_hostname_secondary` must be set when `tfe_run_task_hostname_choice` is `secondary`."
+  }
 }
 
 variable "tfe_capacity_concurrency" {
@@ -350,8 +437,8 @@ variable "public_dns_zone_name" {
   default     = null
 
   validation {
-    condition     = var.create_tfe_public_dns_record ? var.public_dns_zone_name != null : true
-    error_message = "A value is required when `create_tfe_public_dns_record` is `true`."
+    condition     = var.create_tfe_public_dns_record || var.create_tfe_secondary_public_dns_record ? var.public_dns_zone_name != null : true
+    error_message = "A value is required when either public DNS record toggle is true."
   }
 }
 
@@ -363,6 +450,28 @@ variable "public_dns_zone_rg_name" {
   validation {
     condition     = var.public_dns_zone_name != null ? var.public_dns_zone_rg_name != null : true
     error_message = "A value is required when `public_dns_zone_name` is not `null`."
+  }
+}
+
+variable "create_tfe_secondary_public_endpoint" {
+  type        = bool
+  description = "Boolean to create a managed public Azure load balancer frontend and public IP for `tfe_hostname_secondary`."
+  default     = false
+
+  validation {
+    condition     = var.create_tfe_secondary_public_endpoint ? var.tfe_hostname_secondary != null && var.create_lb : true
+    error_message = "`tfe_hostname_secondary` must be set and `create_lb` must be true when `create_tfe_secondary_public_endpoint` is true."
+  }
+}
+
+variable "create_tfe_secondary_public_dns_record" {
+  type        = bool
+  description = "Boolean to create a public Azure DNS record for `tfe_hostname_secondary`."
+  default     = false
+
+  validation {
+    condition     = var.create_tfe_secondary_public_dns_record ? var.create_tfe_secondary_public_endpoint : true
+    error_message = "`create_tfe_secondary_public_endpoint` must be true when `create_tfe_secondary_public_dns_record` is true."
   }
 }
 
