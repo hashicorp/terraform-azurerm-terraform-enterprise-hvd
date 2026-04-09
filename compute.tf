@@ -37,6 +37,20 @@ locals {
   tfe_image_tag_major      = local.is_semver_tfe_image_tag ? tonumber(local.tfe_image_tag_parts[0]) : 0
   tfe_image_tag_minor      = local.is_semver_tfe_image_tag ? tonumber(local.tfe_image_tag_parts[1]) : 0
   tfe_image_tag_patch      = local.is_semver_tfe_image_tag && length(local.tfe_image_tag_parts) > 2 ? tonumber(local.tfe_image_tag_parts[2]) : 0
+  tfe_redis_uses_managed_redis = (
+    !local.is_calver_tfe_image_tag &&
+    local.is_semver_tfe_image_tag &&
+    (
+      local.tfe_image_tag_major > 1 ||
+      (
+        local.tfe_image_tag_major == 1 &&
+        (
+          local.tfe_image_tag_minor > 0 ||
+          (local.tfe_image_tag_minor == 0 && local.tfe_image_tag_patch >= 1)
+        )
+      )
+    )
+  )
   tfe_readiness_uses_api = (
     !local.is_calver_tfe_image_tag &&
     (
@@ -51,9 +65,35 @@ locals {
       )
     )
   )
-  tfe_health_check_path                = local.tfe_readiness_uses_api ? "/api/v1/health/readiness" : "/_health_check"
-  tfe_startup_script_tpl               = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_custom_data.sh.tpl"
-  redis_port                           = var.tfe_redis_use_tls ? 6380 : 6379
+  tfe_health_check_path       = local.tfe_readiness_uses_api ? "/api/v1/health/readiness" : "/_health_check"
+  tfe_startup_script_tpl      = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_custom_data.sh.tpl"
+  redis_private_dns_zone_name = local.tfe_redis_uses_managed_redis ? "privatelink.redis.azure.net" : (var.is_govcloud_region ? "privatelink.redis.cache.usgovcloudapi.net" : "privatelink.redis.cache.windows.net")
+  redis_legacy_port           = var.tfe_redis_use_tls ? 6380 : 6379
+  redis_managed_port          = var.tfe_redis_use_tls ? 10000 : 10001
+  redis_private_endpoint_targets = var.tfe_operational_mode == "active-active" ? (
+    local.tfe_redis_uses_managed_redis ? {
+      main = {
+        resource_id      = azurerm_managed_redis.tfe[0].id
+        dns_record_name  = join(".", slice(split(".", azurerm_managed_redis.tfe[0].hostname), 0, length(split(".", azurerm_managed_redis.tfe[0].hostname)) - 3))
+        subresource_name = "redisEnterprise"
+      }
+      sidekiq = {
+        resource_id      = azurerm_managed_redis.tfe_sidekiq[0].id
+        dns_record_name  = join(".", slice(split(".", azurerm_managed_redis.tfe_sidekiq[0].hostname), 0, length(split(".", azurerm_managed_redis.tfe_sidekiq[0].hostname)) - 3))
+        subresource_name = "redisEnterprise"
+      }
+      } : {
+      main = {
+        resource_id      = azurerm_redis_cache.tfe[0].id
+        dns_record_name  = azurerm_redis_cache.tfe[0].name
+        subresource_name = "redisCache"
+      }
+    }
+  ) : {}
+  redis_main_hostname = var.tfe_operational_mode == "active-active" ? (
+    local.tfe_redis_uses_managed_redis ? azurerm_managed_redis.tfe[0].hostname : azurerm_redis_cache.tfe[0].hostname
+  ) : ""
+  redis_sidekiq_hostname = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? azurerm_managed_redis.tfe_sidekiq[0].hostname : ""
   tfe_object_storage_azure_account_key = var.is_secondary_region ? data.azurerm_storage_account.tfe[0].primary_access_key : azurerm_storage_account.tfe[0].primary_access_key
 
   custom_data_args = {
@@ -63,6 +103,7 @@ locals {
     tfe_tls_privkey_keyvault_secret_id         = var.tfe_tls_privkey_keyvault_secret_id
     tfe_tls_ca_bundle_keyvault_secret_id       = var.tfe_tls_ca_bundle_keyvault_secret_id
     tfe_encryption_password_keyvault_secret_id = var.tfe_encryption_password_keyvault_secret_id
+    tfe_bootstrap_azure_client_id              = azurerm_user_assigned_identity.tfe.client_id
     tfe_image_repository_url                   = var.tfe_image_repository_url
     tfe_image_repository_username              = var.tfe_image_repository_username
     tfe_image_repository_password              = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
@@ -94,7 +135,7 @@ locals {
     tfe_database_host       = "${azurerm_postgresql_flexible_server.tfe.fqdn}:5432"
     tfe_database_name       = var.tfe_database_name
     tfe_database_user       = azurerm_postgresql_flexible_server.tfe.administrator_login
-    tfe_database_password   = azurerm_postgresql_flexible_server.tfe.administrator_password
+    tfe_database_password   = data.azurerm_key_vault_secret.tfe_database_password.value
     tfe_database_parameters = var.tfe_database_parameters
 
 
@@ -108,10 +149,19 @@ locals {
     tfe_object_storage_azure_client_id    = var.tfe_object_storage_azure_use_msi ? azurerm_user_assigned_identity.tfe.client_id : ""
 
     # Redis settings
-    tfe_redis_host     = var.tfe_operational_mode == "active-active" ? "${azurerm_redis_cache.tfe[0].hostname}:${local.redis_port}" : ""
+    tfe_redis_host = var.tfe_operational_mode == "active-active" ? (
+      local.tfe_redis_uses_managed_redis ? "${local.redis_main_hostname}:${local.redis_managed_port}" : "${local.redis_main_hostname}:${local.redis_legacy_port}"
+    ) : ""
     tfe_redis_use_auth = var.tfe_operational_mode == "active-active" ? var.tfe_redis_use_auth : ""
     tfe_redis_use_tls  = var.tfe_operational_mode == "active-active" ? var.tfe_redis_use_tls : ""
-    tfe_redis_password = var.tfe_operational_mode == "active-active" && var.tfe_redis_use_auth ? "${azurerm_redis_cache.tfe[0].primary_access_key}" : ""
+    tfe_redis_password = var.tfe_operational_mode == "active-active" && var.tfe_redis_use_auth ? (
+      local.tfe_redis_uses_managed_redis ? try(azurerm_managed_redis.tfe[0].default_database[0].primary_access_key != null ? azurerm_managed_redis.tfe[0].default_database[0].primary_access_key : "", "") : azurerm_redis_cache.tfe[0].primary_access_key
+    ) : ""
+    tfe_redis_requires_sidekiq_endpoint = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis
+    tfe_redis_sidekiq_host              = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? "${local.redis_sidekiq_hostname}:${local.redis_managed_port}" : ""
+    tfe_redis_sidekiq_use_auth          = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? var.tfe_redis_use_auth : ""
+    tfe_redis_sidekiq_use_tls           = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? var.tfe_redis_use_tls : ""
+    tfe_redis_sidekiq_password          = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis && var.tfe_redis_use_auth ? try(azurerm_managed_redis.tfe_sidekiq[0].default_database[0].primary_access_key != null ? azurerm_managed_redis.tfe_sidekiq[0].default_database[0].primary_access_key : "", "") : ""
 
     # TLS settings
     tfe_tls_cert_file      = "/etc/ssl/private/terraform-enterprise/cert.pem"

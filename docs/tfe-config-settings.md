@@ -26,3 +26,12 @@ The module supports the TFE admin console through:
 - `tfe_admin_console_disabled`
 
 When the console is enabled, the generated runtime configuration sets `TFE_ADMIN_HTTPS_PORT`, and only sets `TFE_ADMIN_CONSOLE_DISABLED` when you explicitly disable the console.
+
+## Version-aware Redis settings
+
+The module derives the Redis topology from `tfe_image_tag` as well:
+
+- Calendar-versioned releases and semver releases earlier than `1.0.1` continue to use a single Azure Cache for Redis instance.
+- Semver releases `>= 1.0.1` switch to Azure Managed Redis and render separate Redis endpoints for the main application and Sidekiq because Azure Managed Redis does not support numbered databases.
+
+When the Managed Redis path is active, the generated runtime configuration includes both the standard `TFE_REDIS_*` settings and the matching `TFE_REDIS_SIDEKIQ_*` settings.

@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: MPL-2.0
 
 #------------------------------------------------------------------------------
-# Redis cache
+# Redis cache / managed redis
 #------------------------------------------------------------------------------
 resource "azurerm_redis_cache" "tfe" {
-  count = var.tfe_operational_mode == "active-active" ? 1 : 0
+  count = var.tfe_operational_mode == "active-active" && !local.tfe_redis_uses_managed_redis ? 1 : 0
 
   name                          = "${var.friendly_name_prefix}-tfe-redis"
   resource_group_name           = local.resource_group_name
@@ -31,6 +31,52 @@ resource "azurerm_redis_cache" "tfe" {
   )
 }
 
+resource "azurerm_managed_redis" "tfe" {
+  count = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? 1 : 0
+
+  name                = "${var.friendly_name_prefix}-tfe-redis"
+  resource_group_name = local.resource_group_name
+  location            = var.location
+  sku_name            = var.redis_managed_sku_name
+
+  high_availability_enabled = var.redis_managed_high_availability_enabled
+  public_network_access     = var.create_redis_private_endpoint ? "Disabled" : "Enabled"
+
+  default_database {
+    access_keys_authentication_enabled = var.tfe_redis_use_auth
+    client_protocol                    = var.tfe_redis_use_tls ? "Encrypted" : "Plaintext"
+    clustering_policy                  = "NoCluster"
+  }
+
+  tags = merge(
+    { "Name" = "${var.friendly_name_prefix}-tfe-redis" },
+    var.common_tags
+  )
+}
+
+resource "azurerm_managed_redis" "tfe_sidekiq" {
+  count = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? 1 : 0
+
+  name                = "${var.friendly_name_prefix}-tfe-sidekiq-redis"
+  resource_group_name = local.resource_group_name
+  location            = var.location
+  sku_name            = var.redis_managed_sku_name
+
+  high_availability_enabled = var.redis_managed_high_availability_enabled
+  public_network_access     = var.create_redis_private_endpoint ? "Disabled" : "Enabled"
+
+  default_database {
+    access_keys_authentication_enabled = var.tfe_redis_use_auth
+    client_protocol                    = var.tfe_redis_use_tls ? "Encrypted" : "Plaintext"
+    clustering_policy                  = "NoCluster"
+  }
+
+  tags = merge(
+    { "Name" = "${var.friendly_name_prefix}-tfe-sidekiq-redis" },
+    var.common_tags
+  )
+}
+
 #------------------------------------------------------------------------------
 # Private DNS zone and private endpoint
 #
@@ -40,7 +86,7 @@ resource "azurerm_redis_cache" "tfe" {
 #------------------------------------------------------------------------------
 resource "azurerm_private_dns_zone" "redis" {
   count               = var.create_redis_private_endpoint && var.tfe_operational_mode == "active-active" ? 1 : 0
-  name                = var.is_govcloud_region ? "privatelink.redis.cache.usgovcloudapi.net" : "privatelink.redis.cache.windows.net"
+  name                = local.redis_private_dns_zone_name
   resource_group_name = local.resource_group_name
   tags                = var.common_tags
 }
@@ -55,32 +101,34 @@ resource "azurerm_private_dns_zone_virtual_network_link" "redis" {
 }
 
 resource "azurerm_private_endpoint" "redis" {
-  count               = var.create_redis_private_endpoint && var.tfe_operational_mode == "active-active" ? 1 : 0
-  name                = "${var.friendly_name_prefix}-tfe-redis-private-endpoint"
+  for_each = var.create_redis_private_endpoint && var.tfe_operational_mode == "active-active" ? local.redis_private_endpoint_targets : {}
+
+  name                = "${var.friendly_name_prefix}-${each.key}-redis-private-endpoint"
   resource_group_name = local.resource_group_name
   location            = var.location
   subnet_id           = var.redis_subnet_id
 
   private_service_connection {
-    name                           = "${var.friendly_name_prefix}-tfe-redis-private-connection"
-    private_connection_resource_id = azurerm_redis_cache.tfe[0].id
+    name                           = "${var.friendly_name_prefix}-${each.key}-redis-private-connection"
+    private_connection_resource_id = each.value.resource_id
     is_manual_connection           = false
-    subresource_names              = ["redisCache"]
+    subresource_names              = [each.value.subresource_name]
   }
 
   tags = merge(
-    { "Name" = "${var.friendly_name_prefix}-tfe-redis-private-endpoint" },
+    { "Name" = "${var.friendly_name_prefix}-${each.key}-redis-private-endpoint" },
     var.common_tags
   )
 }
 
 resource "azurerm_private_dns_a_record" "redis" {
-  count               = var.create_redis_private_endpoint && var.tfe_operational_mode == "active-active" ? 1 : 0
-  name                = azurerm_redis_cache.tfe[0].name
+  for_each = var.create_redis_private_endpoint && var.tfe_operational_mode == "active-active" ? local.redis_private_endpoint_targets : {}
+
+  name                = each.value.dns_record_name
   resource_group_name = local.resource_group_name
   zone_name           = azurerm_private_dns_zone.redis[0].name
   ttl                 = 300
-  records             = [azurerm_private_endpoint.redis[0].private_service_connection[0].private_ip_address]
+  records             = [azurerm_private_endpoint.redis[each.key].private_service_connection[0].private_ip_address]
 
   tags = var.common_tags
 }

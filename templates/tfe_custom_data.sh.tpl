@@ -6,6 +6,20 @@ TFE_CONFIG_DIR="/etc/tfe"
 TFE_LICENSE_PATH="$TFE_CONFIG_DIR/tfe-license.hclic"
 TFE_TLS_CERTS_DIR="$TFE_CONFIG_DIR/tls"
 TFE_LOG_FORWARDING_CONFIG_PATH="$TFE_CONFIG_DIR/fluent-bit.conf"
+CONTAINER_RUNTIME="${container_runtime}"
+IS_GOVCLOUD_REGION="${is_govcloud_region}"
+TFE_HEALTH_CHECK_PATH="${tfe_health_check_path}"
+TFE_LICENSE_KEYVAULT_SECRET_ID="${tfe_license_keyvault_secret_id}"
+TFE_TLS_CERT_KEYVAULT_SECRET_ID="${tfe_tls_cert_keyvault_secret_id}"
+TFE_TLS_PRIVKEY_KEYVAULT_SECRET_ID="${tfe_tls_privkey_keyvault_secret_id}"
+TFE_TLS_CA_BUNDLE_KEYVAULT_SECRET_ID="${tfe_tls_ca_bundle_keyvault_secret_id}"
+TFE_ENCRYPTION_PASSWORD_KEYVAULT_SECRET_ID="${tfe_encryption_password_keyvault_secret_id}"
+TFE_BOOTSTRAP_AZURE_CLIENT_ID="${tfe_bootstrap_azure_client_id}"
+TFE_IMAGE_REPOSITORY_URL="${tfe_image_repository_url}"
+TFE_IMAGE_REPOSITORY_USERNAME="${tfe_image_repository_username}"
+TFE_IMAGE_REPOSITORY_PASSWORD_INPUT="${tfe_image_repository_password}"
+TFE_IMAGE_NAME="${tfe_image_name}"
+TFE_IMAGE_TAG="${tfe_image_tag}"
 
 function log {
   local level="$1"
@@ -118,18 +132,18 @@ function install_podman {
 }
 
 function retrieve_certs_from_key_vault {
-  log "INFO" "Retrieving TLS certificate '${tfe_tls_cert_keyvault_secret_id}' from Key Vault."
-  az keyvault secret show --id "${tfe_tls_cert_keyvault_secret_id}" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/cert.pem
-  log "INFO" "Retrieving TLS private key '${tfe_tls_privkey_keyvault_secret_id}' from Key Vault."
-  az keyvault secret show --id "${tfe_tls_privkey_keyvault_secret_id}" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/key.pem
-  log "INFO" "Retrieving TLS CA bundle '${tfe_tls_ca_bundle_keyvault_secret_id}' from Key Vault."
-  az keyvault secret show --id "${tfe_tls_ca_bundle_keyvault_secret_id}" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/bundle.pem
+  log "INFO" "Retrieving TLS certificate '$TFE_TLS_CERT_KEYVAULT_SECRET_ID' from Key Vault."
+  az keyvault secret show --id "$TFE_TLS_CERT_KEYVAULT_SECRET_ID" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/cert.pem
+  log "INFO" "Retrieving TLS private key '$TFE_TLS_PRIVKEY_KEYVAULT_SECRET_ID' from Key Vault."
+  az keyvault secret show --id "$TFE_TLS_PRIVKEY_KEYVAULT_SECRET_ID" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/key.pem
+  log "INFO" "Retrieving TLS CA bundle '$TFE_TLS_CA_BUNDLE_KEYVAULT_SECRET_ID' from Key Vault."
+  az keyvault secret show --id "$TFE_TLS_CA_BUNDLE_KEYVAULT_SECRET_ID" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/bundle.pem
 }
 
 function retrieve_license_from_key_vault {
-  log "INFO" "Retrieving TFE license '${tfe_license_keyvault_secret_id}' from Key Vault."
-  TFE_LICENSE=$(az keyvault secret show --id "${tfe_license_keyvault_secret_id}" --query value --output tsv)
-  az keyvault secret show --id "${tfe_license_keyvault_secret_id}" --query value --output tsv > $TFE_LICENSE_PATH
+  log "INFO" "Retrieving TFE license '$TFE_LICENSE_KEYVAULT_SECRET_ID' from Key Vault."
+  TFE_LICENSE=$(az keyvault secret show --id "$TFE_LICENSE_KEYVAULT_SECRET_ID" --query value --output tsv)
+  az keyvault secret show --id "$TFE_LICENSE_KEYVAULT_SECRET_ID" --query value --output tsv > $TFE_LICENSE_PATH
 }
 
 function retrieve_secret_from_key_vault {
@@ -155,7 +169,7 @@ function generate_tfe_docker_compose_file {
 name: tfe
 services:
   tfe:
-    image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
+    image: $TFE_IMAGE_REPOSITORY_URL/$TFE_IMAGE_NAME:$TFE_IMAGE_TAG
     restart: unless-stopped
     environment:
       # Application settings
@@ -207,6 +221,12 @@ services:
       TFE_REDIS_USE_TLS: ${tfe_redis_use_tls}
       TFE_REDIS_USE_AUTH: ${tfe_redis_use_auth}
       TFE_REDIS_PASSWORD: ${tfe_redis_password}
+%{ if tfe_redis_requires_sidekiq_endpoint ~}
+      TFE_REDIS_SIDEKIQ_HOST: ${tfe_redis_sidekiq_host}
+      TFE_REDIS_SIDEKIQ_USE_TLS: ${tfe_redis_sidekiq_use_tls}
+      TFE_REDIS_SIDEKIQ_USE_AUTH: ${tfe_redis_sidekiq_use_auth}
+      TFE_REDIS_SIDEKIQ_PASSWORD: ${tfe_redis_sidekiq_password}
+%{ endif ~}
 %{ endif ~}
 
       # TLS settings
@@ -382,6 +402,16 @@ spec:
       value: ${tfe_redis_use_auth}
     - name: "TFE_REDIS_USE_TLS"
       value: ${tfe_redis_use_tls}
+%{ if tfe_redis_requires_sidekiq_endpoint ~}
+    - name: "TFE_REDIS_SIDEKIQ_HOST"
+      value: ${tfe_redis_sidekiq_host}
+    - name: "TFE_REDIS_SIDEKIQ_PASSWORD"
+      value: ${tfe_redis_sidekiq_password}
+    - name: "TFE_REDIS_SIDEKIQ_USE_AUTH"
+      value: ${tfe_redis_sidekiq_use_auth}
+    - name: "TFE_REDIS_SIDEKIQ_USE_TLS"
+      value: ${tfe_redis_sidekiq_use_tls}
+%{ endif ~}
 
     # Vault cluster settings
     - name: "TFE_VAULT_CLUSTER_ADDRESS"
@@ -439,7 +469,7 @@ spec:
     - name: "TFE_IACT_TIME_LIMIT"
       value: ${tfe_iact_time_limit}
 
-    image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
+    image: $TFE_IMAGE_REPOSITORY_URL/$TFE_IMAGE_NAME:$TFE_IMAGE_TAG
     name: "terraform-enterprise"
     ports:
     - containerPort: ${tfe_http_port}
@@ -525,23 +555,23 @@ EOF
 function pull_tfe_image {
   local TFE_CONTAINER_RUNTIME="$1"
   
-  log "INFO" "Authenticating to '${tfe_image_repository_url}' container registry."
-  log "INFO" "Detected TFE image repository username is '${tfe_image_repository_username}'."
-  if [[ "${tfe_image_repository_url}" == "images.releases.hashicorp.com" ]]; then
+  log "INFO" "Authenticating to '$TFE_IMAGE_REPOSITORY_URL' container registry."
+  log "INFO" "Detected TFE image repository username is '$TFE_IMAGE_REPOSITORY_USERNAME'."
+  if [[ "$TFE_IMAGE_REPOSITORY_URL" == "images.releases.hashicorp.com" ]]; then
     log "INFO" "Detected default TFE registry in use. Setting TFE_IMAGE_REPOSITORY_PASSWORD to value of TFE license."
     TFE_IMAGE_REPOSITORY_PASSWORD=$TFE_LICENSE
   else
     log "INFO" "Setting TFE_IMAGE_REPOSITORY_PASSWORD to value of 'tfe_image_repository_password' module input."
-    TFE_IMAGE_REPOSITORY_PASSWORD=${tfe_image_repository_password}
+    TFE_IMAGE_REPOSITORY_PASSWORD=$TFE_IMAGE_REPOSITORY_PASSWORD_INPUT
   fi
   if [[ "$TFE_CONTAINER_RUNTIME" == "podman" ]]; then
-    podman login --username ${tfe_image_repository_username} ${tfe_image_repository_url} --password $TFE_IMAGE_REPOSITORY_PASSWORD
-    log "INFO" "Pulling TFE container image '${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}' down locally."
-    podman pull ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
+    podman login --username "$TFE_IMAGE_REPOSITORY_USERNAME" "$TFE_IMAGE_REPOSITORY_URL" --password "$TFE_IMAGE_REPOSITORY_PASSWORD"
+    log "INFO" "Pulling TFE container image '$TFE_IMAGE_REPOSITORY_URL/$TFE_IMAGE_NAME:$TFE_IMAGE_TAG' down locally."
+    podman pull "$TFE_IMAGE_REPOSITORY_URL/$TFE_IMAGE_NAME:$TFE_IMAGE_TAG"
   else
-    docker login ${tfe_image_repository_url} --username ${tfe_image_repository_username} --password $TFE_IMAGE_REPOSITORY_PASSWORD
-    log "INFO" "Pulling TFE container image '${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}' down locally."
-    docker pull ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
+    docker login "$TFE_IMAGE_REPOSITORY_URL" --username "$TFE_IMAGE_REPOSITORY_USERNAME" --password "$TFE_IMAGE_REPOSITORY_PASSWORD"
+    log "INFO" "Pulling TFE container image '$TFE_IMAGE_REPOSITORY_URL/$TFE_IMAGE_NAME:$TFE_IMAGE_TAG' down locally."
+    docker pull "$TFE_IMAGE_REPOSITORY_URL/$TFE_IMAGE_NAME:$TFE_IMAGE_TAG"
   fi
 }
 
@@ -571,7 +601,7 @@ function main {
 
   log "INFO" "Installing software dependencies..."
   install_azcli "$OS_DISTRO" "$OS_MAJOR_VERSION"
-  if [[ "${container_runtime}" == "podman" ]]; then
+  if [[ "$CONTAINER_RUNTIME" == "podman" ]]; then
     install_podman "$OS_DISTRO" "$OS_MAJOR_VERSION"
   else
     install_docker "$OS_DISTRO" "$OS_MAJOR_VERSION"
@@ -584,13 +614,13 @@ function main {
     lvresize -r -L 40G /dev/mapper/rootvg-varlv
   fi
 
-  if [[ "${is_govcloud_region}" == "true" ]]; then
+  if [[ "$IS_GOVCLOUD_REGION" == "true" ]]; then
     log "INFO" "Setting azure-cli context to AzureUSGovernment environment."
     az cloud set --name AzureUSGovernment
   fi
 
-  log "INFO" "Running 'az login --identity'."
-  az login --identity
+  log "INFO" "Running 'az login --identity --client-id' for client ID '$TFE_BOOTSTRAP_AZURE_CLIENT_ID'."
+  az login --identity --client-id "$TFE_BOOTSTRAP_AZURE_CLIENT_ID"
 
   log "INFO" "Retrieving TFE license file from Key Vault..."
   retrieve_license_from_key_vault
@@ -598,20 +628,20 @@ function main {
   log "INFO" "Retrieving TFE TLS certificates from Key Vault..."
   retrieve_certs_from_key_vault
 
-  log "INFO" "Retrieving 'TFE_ENCRYPTION_PASSWORD' from Key Vault secret ${tfe_encryption_password_keyvault_secret_id}..."
-  TFE_ENCRYPTION_PASSWORD=$(retrieve_secret_from_key_vault "${tfe_encryption_password_keyvault_secret_id}")
+  log "INFO" "Retrieving 'TFE_ENCRYPTION_PASSWORD' from Key Vault secret $TFE_ENCRYPTION_PASSWORD_KEYVAULT_SECRET_ID..."
+  TFE_ENCRYPTION_PASSWORD=$(retrieve_secret_from_key_vault "$TFE_ENCRYPTION_PASSWORD_KEYVAULT_SECRET_ID")
 
   if [[ "${tfe_log_forwarding_enabled}" == "true" ]]; then
     log "INFO" "Generating '$TFE_LOG_FORWARDING_CONFIG_PATH' file for TFE log forwarding via Fluent Bit."
     configure_log_forwarding
   fi
 
-  if [[ "${container_runtime}" == "podman" ]]; then
+  if [[ "$CONTAINER_RUNTIME" == "podman" ]]; then
     TFE_SETTINGS_PATH="$TFE_CONFIG_DIR/tfe-pod.yaml"
     log "INFO" "Generating '$TFE_SETTINGS_PATH' Kubernetes pod manifest for TFE on Podman."
     generate_tfe_podman_manifest "$TFE_SETTINGS_PATH"
     log "INFO" "Preparing to download TFE container image..."
-    pull_tfe_image "${container_runtime}"
+    pull_tfe_image "$CONTAINER_RUNTIME"
     log "INFO" "Configuring systemd service using Quadlet to manage TFE Podman containers."
     generate_tfe_podman_quadlet
     cp "$TFE_SETTINGS_PATH" "/etc/containers/systemd"
@@ -624,7 +654,7 @@ function main {
     log "INFO" "Generating '$TFE_SETTINGS_PATH' file for TFE on Docker."
     generate_tfe_docker_compose_file "$TFE_SETTINGS_PATH"
     log "INFO" "Preparing to download TFE container image..."
-    pull_tfe_image "${container_runtime}"
+    pull_tfe_image "$CONTAINER_RUNTIME"
     log "INFO" "Starting TFE application using Docker Compose."
     if command -v docker-compose > /dev/null; then
       docker-compose --file $TFE_SETTINGS_PATH up --detach
@@ -636,8 +666,8 @@ function main {
   log "INFO" "Sleeping for a minute while TFE initializes..."
   sleep 60
 
-  log "INFO" "Polling TFE health check endpoint '$tfe_health_check_path' until the app becomes ready..."
-  while ! curl -ksfS --connect-timeout 5 "https://$VM_PRIVATE_IP${tfe_health_check_path}"; do
+  log "INFO" "Polling TFE health check endpoint '$TFE_HEALTH_CHECK_PATH' until the app becomes ready..."
+  while ! curl -ksfS --connect-timeout 5 "https://$VM_PRIVATE_IP$TFE_HEALTH_CHECK_PATH"; do
     sleep 5
   done
 
