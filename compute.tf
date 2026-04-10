@@ -33,20 +33,26 @@ locals {
   is_calver_tfe_image_tag  = can(regex("^v[0-9]{6}-[0-9]+$", var.tfe_image_tag))
   normalized_tfe_image_tag = trimprefix(var.tfe_image_tag, "v")
   is_semver_tfe_image_tag  = can(regex("^[0-9]+\\.[0-9]+(\\.[0-9]+)?$", local.normalized_tfe_image_tag))
+  is_commit_hash_tfe_tag   = can(regex("^[0-9a-f]{7,}$", var.tfe_image_tag))
   tfe_image_tag_parts      = local.is_semver_tfe_image_tag ? split(".", local.normalized_tfe_image_tag) : []
   tfe_image_tag_major      = local.is_semver_tfe_image_tag ? tonumber(local.tfe_image_tag_parts[0]) : 0
   tfe_image_tag_minor      = local.is_semver_tfe_image_tag ? tonumber(local.tfe_image_tag_parts[1]) : 0
   tfe_image_tag_patch      = local.is_semver_tfe_image_tag && length(local.tfe_image_tag_parts) > 2 ? tonumber(local.tfe_image_tag_parts[2]) : 0
   tfe_redis_uses_managed_redis = (
     !local.is_calver_tfe_image_tag &&
-    local.is_semver_tfe_image_tag &&
     (
-      local.tfe_image_tag_major > 1 ||
+      local.is_commit_hash_tfe_tag ||
       (
-        local.tfe_image_tag_major == 1 &&
+        local.is_semver_tfe_image_tag &&
         (
-          local.tfe_image_tag_minor > 0 ||
-          (local.tfe_image_tag_minor == 0 && local.tfe_image_tag_patch >= 1)
+          local.tfe_image_tag_major > 1 ||
+          (
+            local.tfe_image_tag_major == 1 &&
+            (
+              local.tfe_image_tag_minor > 0 ||
+              (local.tfe_image_tag_minor == 0 && local.tfe_image_tag_patch >= 1)
+            )
+          )
         )
       )
     )
@@ -54,13 +60,18 @@ locals {
   tfe_readiness_uses_api = (
     !local.is_calver_tfe_image_tag &&
     (
-      !local.is_semver_tfe_image_tag ||
-      local.tfe_image_tag_major > 1 ||
+      local.is_commit_hash_tfe_tag ||
       (
-        local.tfe_image_tag_major == 1 &&
+        local.is_semver_tfe_image_tag &&
         (
-          local.tfe_image_tag_minor > 2 ||
-          (local.tfe_image_tag_minor == 2 && local.tfe_image_tag_patch >= 1)
+          local.tfe_image_tag_major > 1 ||
+          (
+            local.tfe_image_tag_major == 1 &&
+            (
+              local.tfe_image_tag_minor > 2 ||
+              (local.tfe_image_tag_minor == 2 && local.tfe_image_tag_patch >= 1)
+            )
+          )
         )
       )
     )
@@ -93,7 +104,7 @@ locals {
   redis_main_hostname = var.tfe_operational_mode == "active-active" ? (
     local.tfe_redis_uses_managed_redis ? azurerm_managed_redis.tfe[0].hostname : azurerm_redis_cache.tfe[0].hostname
   ) : ""
-  redis_sidekiq_hostname = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? azurerm_managed_redis.tfe_sidekiq[0].hostname : ""
+  redis_sidekiq_hostname               = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? azurerm_managed_redis.tfe_sidekiq[0].hostname : ""
   tfe_object_storage_azure_account_key = var.is_secondary_region ? data.azurerm_storage_account.tfe[0].primary_access_key : azurerm_storage_account.tfe[0].primary_access_key
 
   custom_data_args = {
