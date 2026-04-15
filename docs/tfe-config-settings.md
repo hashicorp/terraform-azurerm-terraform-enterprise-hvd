@@ -13,3 +13,25 @@ The [Terraform Enterprise Flexible Deployment Options configuration reference](h
 Within the [compute.tf](../compute.tf) file, you will see a `locals` block with a map inside of it called `custom_data_args`. Almost all of the TFE configuration settings are passed from here into the [tfe_custom_data.sh](../templates/tfe_custom_data.sh.tpl) script.
 
 Within the [tfe_custom_data.sh](../templates/tfe_custom_data.sh.tpl) script there is a function named `generate_tfe_docker_compose` that is responsible for receiving all of those inputs and dynamically generating the `docker-compose.yaml` file. After a successful install process, this can be found on your TFE VM(s) within `/etc/tfe/docker-compose.yaml`.
+
+## Version-aware health checks
+
+The module computes an effective health-check path from `tfe_image_tag` and uses that same value in both the Azure load balancer probe and the bootstrap polling loop. Calendar-versioned releases continue to use `/_health_check`, while newer semver-style releases use `/api/v1/health/readiness`.
+
+## Admin console settings
+
+The module supports the TFE admin console through:
+
+- `tfe_admin_https_port`
+- `tfe_admin_console_disabled`
+
+When the console is enabled, the generated runtime configuration sets `TFE_ADMIN_HTTPS_PORT`, and only sets `TFE_ADMIN_CONSOLE_DISABLED` when you explicitly disable the console.
+
+## Version-aware Redis settings
+
+The module derives the Redis topology from `tfe_image_tag` as well:
+
+- Calendar-versioned releases and semver releases earlier than `1.0.1` continue to use a single Azure Cache for Redis instance.
+- Semver releases `>= 1.0.1` switch to Azure Managed Redis and render separate Redis endpoints for the main application and Sidekiq because Azure Managed Redis does not support numbered databases.
+
+When the Managed Redis path is active, the generated runtime configuration includes both the standard `TFE_REDIS_*` settings and the matching `TFE_REDIS_SIDEKIQ_*` settings.

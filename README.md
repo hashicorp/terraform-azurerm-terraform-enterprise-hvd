@@ -32,6 +32,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 - Allow `TCP/443` ingress to load balancer subnet (if TFE load balancer is to be _internal_) or VM subnet (if TFE load balancer is to be _external_) from CIDR ranges of TFE users/clients, your VCS, and other systems (such as CI/CD) that will need to access TFE
 - (Optional) Allow `TCP/9091` (HTTPS) and/or `TCP/9090` (HTTP) ingress to VM subnet from monitoring/observability tool CIDR range (for scraping TFE metrics endpoints)
+- (Optional) Allow `TCP/9443` ingress for the TFE admin console when `tfe_admin_console_disabled` is `false`
 - Allow `TCP/5432` ingress to database subnet from VM subnet (for PostgreSQL traffic)
 - Allow `TCP/6380` ingress to Redis cache subnetfrom VM subnet (for Redis TLS traffic)
 - Allow `TCP/8201` between VMs on VM subnet (for TFE embedded Vault internal cluster traffic between TFE nodes when `tfe_operational_mode` is `active-active`)
@@ -151,6 +152,8 @@ One of the following logging destinations for the TFE container logs:
 
 1. Follow the steps to [create the TFE initial admin user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user).
 
+>📝 Note: This module automatically switches between `/_health_check` and `/api/v1/health/readiness` based on `tfe_image_tag` so the Azure load balancer probe and bootstrap polling stay aligned with the deployed TFE version.
+
 ## Docs
 
 Below are links to various docs related to the customization and management of your TFE deployment:
@@ -176,13 +179,13 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
-| <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | ~> 3.117 |
+| <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | ~> 4.67 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~> 3.117 |
+| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~> 4.67 |
 
 ## Resources
 
@@ -196,7 +199,10 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | [azurerm_lb_backend_address_pool.tfe_servers](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/lb_backend_address_pool) | resource |
 | [azurerm_lb_probe.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/lb_probe) | resource |
 | [azurerm_lb_rule.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/lb_rule) | resource |
+| [azurerm_lb_rule.tfe_admin_console](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/lb_rule) | resource |
 | [azurerm_linux_virtual_machine_scale_set.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_virtual_machine_scale_set) | resource |
+| [azurerm_managed_redis.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/managed_redis) | resource |
+| [azurerm_managed_redis.tfe_sidekiq](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/managed_redis) | resource |
 | [azurerm_postgresql_flexible_server.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/postgresql_flexible_server) | resource |
 | [azurerm_postgresql_flexible_server_configuration.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/postgresql_flexible_server_configuration) | resource |
 | [azurerm_postgresql_flexible_server_database.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/postgresql_flexible_server_database) | resource |
@@ -256,11 +262,13 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_vm_subnet_id"></a> [vm\_subnet\_id](#input\_vm\_subnet\_id) | Subnet ID for Virtual Machine Scaleset (VMSS). | `string` | n/a | yes |
 | <a name="input_vnet_id"></a> [vnet\_id](#input\_vnet\_id) | ID of VNet where TFE will be deployed. | `string` | n/a | yes |
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | List of Azure availability zones to spread TFE resources across. | `set(string)` | <pre>[<br/>  "1",<br/>  "2",<br/>  "3"<br/>]</pre> | no |
+| <a name="input_bootstrap_keyvault_create_reader_role_assignment"></a> [bootstrap\_keyvault\_create\_reader\_role\_assignment](#input\_bootstrap\_keyvault\_create\_reader\_role\_assignment) | Boolean to create an Azure RBAC Reader role assignment on the bootstrap Key Vault for the TFE user-assigned identity. Disable this when Key Vault access policies are sufficient and the deploying principal cannot write role assignments. | `bool` | `true` | no |
+| <a name="input_cidr_allow_ingress_tfe_admin_console"></a> [cidr\_allow\_ingress\_tfe\_admin\_console](#input\_cidr\_allow\_ingress\_tfe\_admin\_console) | List of CIDR ranges that should be allowed to reach the admin console port. This module does not create NSG rules, so use this as the contract for your prerequisite firewall policy. | `list(string)` | `null` | no |
 | <a name="input_common_tags"></a> [common\_tags](#input\_common\_tags) | Map of common tags for taggable Azure resources. | `map(string)` | `{}` | no |
 | <a name="input_create_blob_storage_private_endpoint"></a> [create\_blob\_storage\_private\_endpoint](#input\_create\_blob\_storage\_private\_endpoint) | Boolean to create a private endpoint and private DNS zone for TFE Storage Account. | `bool` | `true` | no |
 | <a name="input_create_lb"></a> [create\_lb](#input\_create\_lb) | Boolean to create an Azure Load Balancer for TFE. | `bool` | `true` | no |
 | <a name="input_create_postgres_private_endpoint"></a> [create\_postgres\_private\_endpoint](#input\_create\_postgres\_private\_endpoint) | Boolean to create a private endpoint and private DNS zone for PostgreSQL Flexible Server. | `bool` | `true` | no |
-| <a name="input_create_redis_private_endpoint"></a> [create\_redis\_private\_endpoint](#input\_create\_redis\_private\_endpoint) | Boolean to create a private DNS zone and private endpoint for Redis cache. | `bool` | `true` | no |
+| <a name="input_create_redis_private_endpoint"></a> [create\_redis\_private\_endpoint](#input\_create\_redis\_private\_endpoint) | Boolean to create a private DNS zone and private endpoint for the Redis service used by TFE. | `bool` | `true` | no |
 | <a name="input_create_resource_group"></a> [create\_resource\_group](#input\_create\_resource\_group) | Boolean to create a new resource group for this TFE deployment. | `bool` | `true` | no |
 | <a name="input_create_tfe_private_dns_record"></a> [create\_tfe\_private\_dns\_record](#input\_create\_tfe\_private\_dns\_record) | Boolean to create a DNS record for TFE in a private Azure DNS zone. A `private_dns_zone_name` must also be provided when `true`. | `bool` | `false` | no |
 | <a name="input_create_tfe_public_dns_record"></a> [create\_tfe\_public\_dns\_record](#input\_create\_tfe\_public\_dns\_record) | Boolean to create a DNS record for TFE in a public Azure DNS zone. A `public_dns_zone_name` must also be provided when `true`. | `bool` | `false` | no |
@@ -295,13 +303,15 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_private_dns_zone_rg_name"></a> [private\_dns\_zone\_rg\_name](#input\_private\_dns\_zone\_rg\_name) | Name of Resource Group where `private_dns_zone_name` resides. Required when `create_tfe_private_dns_record` is `true`. | `string` | `null` | no |
 | <a name="input_public_dns_zone_name"></a> [public\_dns\_zone\_name](#input\_public\_dns\_zone\_name) | Name of existing public Azure DNS zone to create DNS record in. Required when `create_tfe_public_dns_record` is `true`. | `string` | `null` | no |
 | <a name="input_public_dns_zone_rg_name"></a> [public\_dns\_zone\_rg\_name](#input\_public\_dns\_zone\_rg\_name) | Name of Resource Group where `public_dns_zone_name` resides. Required when `public_dns_zone_name` is not `null`. | `string` | `null` | no |
-| <a name="input_redis_capacity"></a> [redis\_capacity](#input\_redis\_capacity) | The size of the Redis cache to deploy. Valid values for a SKU family of C (Basic/Standard) are 0, 1, 2, 3, 4, 5, 6, and for P (Premium) family are 1, 2, 3, 4. | `number` | `1` | no |
-| <a name="input_redis_family"></a> [redis\_family](#input\_redis\_family) | The SKU family/pricing group to use. Valid values are C (for Basic/Standard SKU family) and P (for Premium). | `string` | `"P"` | no |
-| <a name="input_redis_min_tls_version"></a> [redis\_min\_tls\_version](#input\_redis\_min\_tls\_version) | Minimum TLS version to use with Redis cache. | `string` | `"1.2"` | no |
-| <a name="input_redis_non_ssl_port_enabled"></a> [redis\_non\_ssl\_port\_enabled](#input\_redis\_non\_ssl\_port\_enabled) | Boolean to enable non-SSL port 6379 for Redis cache. | `bool` | `false` | no |
-| <a name="input_redis_sku_name"></a> [redis\_sku\_name](#input\_redis\_sku\_name) | Which SKU of Redis to use. Options are 'Basic', 'Standard', or 'Premium'. | `string` | `"Premium"` | no |
+| <a name="input_redis_capacity"></a> [redis\_capacity](#input\_redis\_capacity) | The size of the legacy Azure Cache for Redis deployment. Valid values for a SKU family of C (Basic/Standard) are 0, 1, 2, 3, 4, 5, 6, and for P (Premium) family are 1, 2, 3, 4. | `number` | `1` | no |
+| <a name="input_redis_family"></a> [redis\_family](#input\_redis\_family) | The SKU family/pricing group to use for the legacy Azure Cache for Redis path. Valid values are C (for Basic/Standard SKU family) and P (for Premium). | `string` | `"P"` | no |
+| <a name="input_redis_managed_high_availability_enabled"></a> [redis\_managed\_high\_availability\_enabled](#input\_redis\_managed\_high\_availability\_enabled) | Boolean to enable high availability for Azure Managed Redis instances when `tfe_image_tag` is semver `>= 1.0.1`. | `bool` | `true` | no |
+| <a name="input_redis_managed_sku_name"></a> [redis\_managed\_sku\_name](#input\_redis\_managed\_sku\_name) | Managed Redis SKU to use when `tfe_image_tag` is semver `>= 1.0.1` and the module switches to Azure Managed Redis. | `string` | `"Balanced_B3"` | no |
+| <a name="input_redis_min_tls_version"></a> [redis\_min\_tls\_version](#input\_redis\_min\_tls\_version) | Minimum TLS version to use with the legacy Azure Cache for Redis path. | `string` | `"1.2"` | no |
+| <a name="input_redis_non_ssl_port_enabled"></a> [redis\_non\_ssl\_port\_enabled](#input\_redis\_non\_ssl\_port\_enabled) | Boolean to enable non-SSL port 6379 for the legacy Azure Cache for Redis path. | `bool` | `false` | no |
+| <a name="input_redis_sku_name"></a> [redis\_sku\_name](#input\_redis\_sku\_name) | Which SKU of Redis to use for the legacy Azure Cache for Redis path. Options are 'Basic', 'Standard', or 'Premium'. | `string` | `"Premium"` | no |
 | <a name="input_redis_subnet_id"></a> [redis\_subnet\_id](#input\_redis\_subnet\_id) | Subnet ID for Redis cache. | `string` | `null` | no |
-| <a name="input_redis_version"></a> [redis\_version](#input\_redis\_version) | Redis cache version. Only the major version is needed. | `number` | `6` | no |
+| <a name="input_redis_version"></a> [redis\_version](#input\_redis\_version) | Legacy Azure Cache for Redis version. Only the major version is needed. | `number` | `6` | no |
 | <a name="input_secondary_vm_subnet_id"></a> [secondary\_vm\_subnet\_id](#input\_secondary\_vm\_subnet\_id) | VM subnet ID of existing TFE virtual machine scaleset (VMSS) in secondary region. Used to allow TFE VMs in secondary region access to TFE storage account in primary region. | `string` | `null` | no |
 | <a name="input_storage_account_blob_change_feed_enabled"></a> [storage\_account\_blob\_change\_feed\_enabled](#input\_storage\_account\_blob\_change\_feed\_enabled) | Boolean to enable blob change feed for the TFE Storage Account. | `bool` | `false` | no |
 | <a name="input_storage_account_blob_versioning_enabled"></a> [storage\_account\_blob\_versioning\_enabled](#input\_storage\_account\_blob\_versioning\_enabled) | Boolean to enable blob versioning for the TFE Storage Account. | `bool` | `false` | no |
@@ -310,6 +320,8 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_storage_account_ip_allow"></a> [storage\_account\_ip\_allow](#input\_storage\_account\_ip\_allow) | List of IP addresses allowed to access TFE Storage Account. Set this to the IP address that you are running Terraform from to deploy this module to avoid a 403 error from Azure when creating the storage container. | `list(string)` | `[]` | no |
 | <a name="input_storage_account_public_network_access_enabled"></a> [storage\_account\_public\_network\_access\_enabled](#input\_storage\_account\_public\_network\_access\_enabled) | Boolean to enable public network access to Azure Blob Storage Account. Needs to be `true` for initial deployment. Optionally set to `false` after initial deployment. | `bool` | `true` | no |
 | <a name="input_storage_account_replication_type"></a> [storage\_account\_replication\_type](#input\_storage\_account\_replication\_type) | Type of replication to use for TFE Storage Account. | `string` | `"GRS"` | no |
+| <a name="input_tfe_admin_console_disabled"></a> [tfe\_admin\_console\_disabled](#input\_tfe\_admin\_console\_disabled) | Boolean to disable the TFE Admin Console for advanced troubleshooting and diagnostics. | `bool` | `true` | no |
+| <a name="input_tfe_admin_https_port"></a> [tfe\_admin\_https\_port](#input\_tfe\_admin\_https\_port) | Port the TFE application container listens on for system (admin) API endpoint HTTPS traffic. | `number` | `9443` | no |
 | <a name="input_tfe_capacity_concurrency"></a> [tfe\_capacity\_concurrency](#input\_tfe\_capacity\_concurrency) | Number of concurrent runs TFE can handle. | `number` | `10` | no |
 | <a name="input_tfe_capacity_cpu"></a> [tfe\_capacity\_cpu](#input\_tfe\_capacity\_cpu) | Number of CPU cores for TFE. | `number` | `0` | no |
 | <a name="input_tfe_capacity_memory"></a> [tfe\_capacity\_memory](#input\_tfe\_capacity\_memory) | Amount of memory in MB for TFE. | `number` | `2048` | no |
@@ -354,6 +366,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 
 | Name | Description |
 |------|-------------|
+| <a name="output_tfe_admin_console_url_pattern"></a> [tfe\_admin\_console\_url\_pattern](#output\_tfe\_admin\_console\_url\_pattern) | URL pattern to access the TFE Admin Console when it is enabled. |
 | <a name="output_tfe_database_host"></a> [tfe\_database\_host](#output\_tfe\_database\_host) | FQDN and port of PostgreSQL Flexible Server. |
 | <a name="output_tfe_database_name"></a> [tfe\_database\_name](#output\_tfe\_database\_name) | Name of PostgreSQL Flexible Server database. |
 | <a name="output_tfe_object_storage_azure_account_name"></a> [tfe\_object\_storage\_azure\_account\_name](#output\_tfe\_object\_storage\_azure\_account\_name) | Name of primary TFE Azure Storage Account. |

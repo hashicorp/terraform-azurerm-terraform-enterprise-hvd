@@ -21,6 +21,8 @@ data "azurerm_key_vault" "bootstrap" {
 }
 
 resource "azurerm_role_assignment" "tfe_kv_reader" {
+  count = var.bootstrap_keyvault_create_reader_role_assignment ? 1 : 0
+
   scope                = data.azurerm_key_vault.bootstrap.id
   role_definition_name = "Reader"
   principal_id         = azurerm_user_assigned_identity.tfe.principal_id
@@ -111,5 +113,4 @@ resource "azurerm_role_assignment" "tfe_vmss_disk_encryption_set_reader" {
   role_definition_name = "Reader"
   principal_id         = azurerm_user_assigned_identity.tfe.principal_id
 }
-
 

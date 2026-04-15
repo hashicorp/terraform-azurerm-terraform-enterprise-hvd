@@ -43,6 +43,16 @@ Supported values:
 
 We recommend deploying an internal load balancer unless you have a specific use case where your TFE users/clients or VCS need to be able to reach your TFE instance from the Internet.
 
+### Admin console
+
+**Input variables:** `tfe_admin_console_disabled`, `tfe_admin_https_port`
+
+Supported values:
+- `tfe_admin_console_disabled = true` - default and recommended unless you actively need system API or admin-console access
+- `tfe_admin_console_disabled = false` - exposes the admin console through the module load balancer on `tfe_admin_https_port`
+
+When you enable the admin console, update your prerequisite NSGs/firewalls to allow only trusted operator CIDRs to reach that port.
+
 ### Log forwarding
 
 **Input variable:** `tfe_log_forwarding_enabled` (bool)

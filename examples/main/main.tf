@@ -5,7 +5,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.117"
+      version = "~> 4.67"
     }
   }
 }
@@ -26,25 +26,29 @@ module "tfe" {
   is_govcloud_region    = var.is_govcloud_region
 
   # --- Bootstrap --- #
-  bootstrap_keyvault_name                    = var.bootstrap_keyvault_name
-  bootstrap_keyvault_rg_name                 = var.bootstrap_keyvault_rg_name
-  tfe_license_keyvault_secret_id             = var.tfe_license_keyvault_secret_id
-  tfe_tls_cert_keyvault_secret_id            = var.tfe_tls_cert_keyvault_secret_id
-  tfe_tls_privkey_keyvault_secret_id         = var.tfe_tls_privkey_keyvault_secret_id
-  tfe_tls_ca_bundle_keyvault_secret_id       = var.tfe_tls_ca_bundle_keyvault_secret_id
-  tfe_encryption_password_keyvault_secret_id = var.tfe_encryption_password_keyvault_secret_id
+  bootstrap_keyvault_name                          = var.bootstrap_keyvault_name
+  bootstrap_keyvault_rg_name                       = var.bootstrap_keyvault_rg_name
+  bootstrap_keyvault_create_reader_role_assignment = var.bootstrap_keyvault_create_reader_role_assignment
+  tfe_license_keyvault_secret_id                   = var.tfe_license_keyvault_secret_id
+  tfe_tls_cert_keyvault_secret_id                  = var.tfe_tls_cert_keyvault_secret_id
+  tfe_tls_privkey_keyvault_secret_id               = var.tfe_tls_privkey_keyvault_secret_id
+  tfe_tls_ca_bundle_keyvault_secret_id             = var.tfe_tls_ca_bundle_keyvault_secret_id
+  tfe_encryption_password_keyvault_secret_id       = var.tfe_encryption_password_keyvault_secret_id
 
   # --- TFE config settings --- #
-  tfe_fqdn                 = var.tfe_fqdn
-  tfe_image_tag            = var.tfe_image_tag
-  tfe_hairpin_addressing   = var.tfe_hairpin_addressing
-  tfe_capacity_concurrency = var.tfe_capacity_concurrency
-  tfe_capacity_cpu         = var.tfe_capacity_cpu
-  tfe_capacity_memory      = var.tfe_capacity_memory
-  tfe_metrics_enable       = var.tfe_metrics_enable
-  tfe_metrics_http_port    = var.tfe_metrics_http_port
-  tfe_metrics_https_port   = var.tfe_metrics_https_port
-  tfe_operational_mode     = var.tfe_operational_mode
+  tfe_fqdn                             = var.tfe_fqdn
+  tfe_image_tag                        = var.tfe_image_tag
+  tfe_hairpin_addressing               = var.tfe_hairpin_addressing
+  tfe_capacity_concurrency             = var.tfe_capacity_concurrency
+  tfe_capacity_cpu                     = var.tfe_capacity_cpu
+  tfe_capacity_memory                  = var.tfe_capacity_memory
+  tfe_metrics_enable                   = var.tfe_metrics_enable
+  tfe_metrics_http_port                = var.tfe_metrics_http_port
+  tfe_metrics_https_port               = var.tfe_metrics_https_port
+  tfe_admin_https_port                 = var.tfe_admin_https_port
+  tfe_admin_console_disabled           = var.tfe_admin_console_disabled
+  cidr_allow_ingress_tfe_admin_console = var.cidr_allow_ingress_tfe_admin_console
+  tfe_operational_mode                 = var.tfe_operational_mode
 
   # --- Networking --- #
   vnet_id         = var.vnet_id

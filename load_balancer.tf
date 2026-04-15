@@ -65,7 +65,7 @@ resource "azurerm_lb_probe" "tfe" {
   loadbalancer_id     = azurerm_lb.tfe[0].id
   protocol            = "Https"
   port                = 443
-  request_path        = "/_health_check"
+  request_path        = local.tfe_health_check_path
   interval_in_seconds = 15
   number_of_probes    = 5
 }
@@ -81,4 +81,17 @@ resource "azurerm_lb_rule" "tfe" {
   frontend_port                  = 443
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.tfe_servers[0].id]
   backend_port                   = 443
+}
+
+resource "azurerm_lb_rule" "tfe_admin_console" {
+  count = var.create_lb && !var.tfe_admin_console_disabled ? 1 : 0
+
+  name                           = "${var.friendly_name_prefix}-tfe-lb-rule-admin"
+  loadbalancer_id                = azurerm_lb.tfe[0].id
+  probe_id                       = azurerm_lb_probe.tfe[0].id
+  protocol                       = "Tcp"
+  frontend_ip_configuration_name = azurerm_lb.tfe[0].frontend_ip_configuration[0].name
+  frontend_port                  = var.tfe_admin_https_port
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.tfe_servers[0].id]
+  backend_port                   = var.tfe_admin_https_port
 }

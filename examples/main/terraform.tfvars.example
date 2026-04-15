@@ -29,6 +29,9 @@ tfe_capacity_memory      = <2048>            # Maximum amount of memory (MiB) a 
 tfe_metrics_enable       = <false>
 tfe_metrics_http_port    = <9090>
 tfe_metrics_https_port   = <9091>
+tfe_admin_https_port     = <9443>
+tfe_admin_console_disabled = <true>
+cidr_allow_ingress_tfe_admin_console = ["<10.0.0.0/24>"] # required when `tfe_admin_console_disabled` is false; enforce this in your prereqs NSGs/firewalls
 
 # --- Networking --- #
 vnet_id         = "<tfe-vnet-id>"
