@@ -11,7 +11,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 - TFE license file (_e.g._ `terraform.hclic`).
 - Terraform CLI `>= 1.9` installed on clients/workstations that will be used to deploy TFE
 - General understanding of how to use Terraform (Community Edition)
-- General understanding of how to use Azure cloud/
+- General understanding of how to use Azure cloud.
 - `git` CLI and Visual Studio Code editor installed on workstations are strongly recommended
 - Azure subscription that TFE will be deployed in with admin-like permissions to provision these [resources](#resources) in via Terraform CLI
 - Azure blob storage account for [AzureRM remote state backend](https://www.terraform.io/docs/language/settings/backends/azurerm.html) that will be used to manage the Terraform state of this TFE deployment (out-of-band from the TFE application) via Terraform CLI (Community Edition)
