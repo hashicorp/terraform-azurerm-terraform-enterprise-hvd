@@ -171,6 +171,7 @@ services:
   tfe:
     image: $TFE_IMAGE_REPOSITORY_URL/$TFE_IMAGE_NAME:$TFE_IMAGE_TAG
     restart: unless-stopped
+    stop_grace_period: 30s
     environment:
       # Application settings
       TFE_HOSTNAME: ${tfe_hostname}
