@@ -104,6 +104,12 @@ variable "bootstrap_keyvault_create_reader_role_assignment" {
   default     = true
 }
 
+variable "use_key_vault_rbac" {
+  type        = bool
+  description = "Whether to use Azure RBAC instead of legacy access policies for Key Vault data-plane access."
+  default     = false
+}
+
 variable "tfe_license_keyvault_secret_id" {
   type        = string
   description = "ID of Key Vault secret containing TFE license."

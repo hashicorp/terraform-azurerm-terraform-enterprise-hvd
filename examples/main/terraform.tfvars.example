@@ -13,6 +13,7 @@ common_tags = {
 # --- Bootstrap --- #
 bootstrap_keyvault_name                    = "<bootstrap-keyvault-name>"
 bootstrap_keyvault_rg_name                 = "<bootstrap-keyvault-resource-group-name>"
+use_key_vault_rbac                         = false
 tfe_license_keyvault_secret_id             = "<https://tfe-license-keyvault-secret-id>"
 tfe_tls_cert_keyvault_secret_id            = "<https://tfe-cert-keyvault-secret-id>"
 tfe_tls_privkey_keyvault_secret_id         = "<https://tfe-private-key-keyvault-secret-id>"

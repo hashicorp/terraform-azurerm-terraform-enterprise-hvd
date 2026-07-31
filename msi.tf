@@ -29,6 +29,8 @@ resource "azurerm_role_assignment" "tfe_kv_reader" {
 }
 
 resource "azurerm_key_vault_access_policy" "tfe_kv_reader" {
+  count = var.use_key_vault_rbac ? 0 : 1
+
   key_vault_id = data.azurerm_key_vault.bootstrap.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
   object_id    = azurerm_user_assigned_identity.tfe.principal_id
@@ -36,6 +38,14 @@ resource "azurerm_key_vault_access_policy" "tfe_kv_reader" {
   secret_permissions = [
     "Get",
   ]
+}
+
+resource "azurerm_role_assignment" "tfe_kv_secrets_user" {
+  count = var.use_key_vault_rbac ? 1 : 0
+
+  scope                = data.azurerm_key_vault.bootstrap.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.tfe.principal_id
 }
 
 resource "azurerm_role_assignment" "tfe_sa_owner" {
@@ -58,7 +68,7 @@ resource "azurerm_user_assigned_identity" "postgres" {
 }
 
 resource "azurerm_key_vault_access_policy" "postgres_cmk" {
-  count = var.postgres_cmk_keyvault_key_id != null && var.postgres_cmk_keyvault_id != null ? 1 : 0
+  count = !var.use_key_vault_rbac && var.postgres_cmk_keyvault_key_id != null && var.postgres_cmk_keyvault_id != null ? 1 : 0
 
   key_vault_id = var.postgres_cmk_keyvault_id
   tenant_id    = data.azurerm_client_config.current.tenant_id
@@ -69,6 +79,14 @@ resource "azurerm_key_vault_access_policy" "postgres_cmk" {
     "WrapKey",
     "UnwrapKey",
   ]
+}
+
+resource "azurerm_role_assignment" "postgres_cmk_crypto_service_encryption_user" {
+  count = var.use_key_vault_rbac && var.postgres_cmk_keyvault_key_id != null && var.postgres_cmk_keyvault_id != null ? 1 : 0
+
+  scope                = var.postgres_cmk_keyvault_id
+  role_definition_name = "Key Vault Crypto Service Encryption User"
+  principal_id         = azurerm_user_assigned_identity.postgres[0].principal_id
 }
 
 #------------------------------------------------------------------------------
@@ -83,7 +101,7 @@ resource "azurerm_user_assigned_identity" "storage_account" {
 }
 
 resource "azurerm_key_vault_access_policy" "storage_account_cmk" {
-  count = var.storage_account_cmk_keyvault_key_id != null && var.storage_account_cmk_keyvault_id != null ? 1 : 0
+  count = !var.use_key_vault_rbac && var.storage_account_cmk_keyvault_key_id != null && var.storage_account_cmk_keyvault_id != null ? 1 : 0
 
   key_vault_id = var.storage_account_cmk_keyvault_id
   tenant_id    = data.azurerm_client_config.current.tenant_id
@@ -94,6 +112,14 @@ resource "azurerm_key_vault_access_policy" "storage_account_cmk" {
     "WrapKey",
     "UnwrapKey",
   ]
+}
+
+resource "azurerm_role_assignment" "storage_account_cmk_crypto_service_encryption_user" {
+  count = var.use_key_vault_rbac && var.storage_account_cmk_keyvault_key_id != null && var.storage_account_cmk_keyvault_id != null ? 1 : 0
+
+  scope                = var.storage_account_cmk_keyvault_id
+  role_definition_name = "Key Vault Crypto Service Encryption User"
+  principal_id         = azurerm_user_assigned_identity.storage_account[0].principal_id
 }
 
 #------------------------------------------------------------------------------
@@ -113,4 +139,3 @@ resource "azurerm_role_assignment" "tfe_vmss_disk_encryption_set_reader" {
   role_definition_name = "Reader"
   principal_id         = azurerm_user_assigned_identity.tfe.principal_id
 }
-
