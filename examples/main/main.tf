@@ -29,6 +29,7 @@ module "tfe" {
   bootstrap_keyvault_name                          = var.bootstrap_keyvault_name
   bootstrap_keyvault_rg_name                       = var.bootstrap_keyvault_rg_name
   bootstrap_keyvault_create_reader_role_assignment = var.bootstrap_keyvault_create_reader_role_assignment
+  use_key_vault_rbac                               = var.use_key_vault_rbac
   tfe_license_keyvault_secret_id                   = var.tfe_license_keyvault_secret_id
   tfe_tls_cert_keyvault_secret_id                  = var.tfe_tls_cert_keyvault_secret_id
   tfe_tls_privkey_keyvault_secret_id               = var.tfe_tls_privkey_keyvault_secret_id
