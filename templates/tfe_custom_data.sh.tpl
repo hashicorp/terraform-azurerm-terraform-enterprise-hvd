@@ -239,11 +239,20 @@ services:
       TFE_REDIS_USE_TLS: ${tfe_redis_use_tls}
       TFE_REDIS_USE_AUTH: ${tfe_redis_use_auth}
       TFE_REDIS_PASSWORD: ${tfe_redis_password}
+%{ if tfe_redis_passwordless_azure_use_msi ~}
+      TFE_REDIS_PASSWORDLESS_AZURE_USE_MSI: ${tfe_redis_passwordless_azure_use_msi}
+      TFE_REDIS_PASSWORDLESS_AZURE_CLIENT_ID: ${tfe_redis_passwordless_azure_client_id}
+      TFE_REDIS_USER: ${tfe_redis_user}
+%{ endif ~}
 %{ if tfe_redis_requires_sidekiq_endpoint ~}
       TFE_REDIS_SIDEKIQ_HOST: ${tfe_redis_sidekiq_host}
       TFE_REDIS_SIDEKIQ_USE_TLS: ${tfe_redis_sidekiq_use_tls}
       TFE_REDIS_SIDEKIQ_USE_AUTH: ${tfe_redis_sidekiq_use_auth}
       TFE_REDIS_SIDEKIQ_PASSWORD: ${tfe_redis_sidekiq_password}
+%{ if tfe_redis_sidekiq_passwordless_azure_use_msi ~}
+      TFE_REDIS_SIDEKIQ_PASSWORDLESS_AZURE_USE_MSI: ${tfe_redis_sidekiq_passwordless_azure_use_msi}
+      TFE_REDIS_SIDEKIQ_USER: ${tfe_redis_sidekiq_user}
+%{ endif ~}
 %{ endif ~}
 %{ endif ~}
 
@@ -440,6 +449,14 @@ spec:
       value: ${tfe_redis_use_auth}
     - name: "TFE_REDIS_USE_TLS"
       value: ${tfe_redis_use_tls}
+%{ if tfe_redis_passwordless_azure_use_msi ~}
+    - name: "TFE_REDIS_PASSWORDLESS_AZURE_USE_MSI"
+      value: ${tfe_redis_passwordless_azure_use_msi}
+    - name: "TFE_REDIS_PASSWORDLESS_AZURE_CLIENT_ID"
+      value: ${tfe_redis_passwordless_azure_client_id}
+    - name: "TFE_REDIS_USER"
+      value: ${tfe_redis_user}
+%{ endif ~}
 %{ if tfe_redis_requires_sidekiq_endpoint ~}
     - name: "TFE_REDIS_SIDEKIQ_HOST"
       value: ${tfe_redis_sidekiq_host}
@@ -449,6 +466,12 @@ spec:
       value: ${tfe_redis_sidekiq_use_auth}
     - name: "TFE_REDIS_SIDEKIQ_USE_TLS"
       value: ${tfe_redis_sidekiq_use_tls}
+%{ if tfe_redis_sidekiq_passwordless_azure_use_msi ~}
+    - name: "TFE_REDIS_SIDEKIQ_PASSWORDLESS_AZURE_USE_MSI"
+      value: ${tfe_redis_sidekiq_passwordless_azure_use_msi}
+    - name: "TFE_REDIS_SIDEKIQ_USER"
+      value: ${tfe_redis_sidekiq_user}
+%{ endif ~}
 %{ endif ~}
 
     # Vault cluster settings

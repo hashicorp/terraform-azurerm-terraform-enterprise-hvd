@@ -981,6 +981,12 @@ variable "create_redis_private_endpoint" {
   default     = true
 }
 
+variable "tfe_redis_passwordless_azure_use_msi" {
+  type        = bool
+  description = "Boolean to enable Azure MSI (Managed Identity) passwordless authentication to Azure Cache for Redis instead of a static access key. Requires the TFE MSI to be granted the 'Redis Cache Contributor' role on the Redis resource. Only valid for the legacy Azure Cache for Redis path (calver TFE image tags). See https://developer.hashicorp.com/terraform/enterprise/deploy/configuration/storage/connect-redis#azure-msi."
+  default     = false
+}
+
 #------------------------------------------------------------------------------
 # Log forwarding
 #------------------------------------------------------------------------------

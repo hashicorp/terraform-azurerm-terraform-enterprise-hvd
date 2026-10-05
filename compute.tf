@@ -173,14 +173,24 @@ locals {
     ) : ""
     tfe_redis_use_auth = var.tfe_operational_mode == "active-active" ? var.tfe_redis_use_auth : ""
     tfe_redis_use_tls  = var.tfe_operational_mode == "active-active" ? var.tfe_redis_use_tls : ""
-    tfe_redis_password = var.tfe_operational_mode == "active-active" && var.tfe_redis_use_auth ? (
+    # Password is omitted when MSI passwordless auth is enabled; TFE acquires a
+    # token from IMDS instead of using a static access key.
+    tfe_redis_password = var.tfe_operational_mode == "active-active" && var.tfe_redis_use_auth && !var.tfe_redis_passwordless_azure_use_msi ? (
       local.tfe_redis_uses_managed_redis ? try(azurerm_managed_redis.tfe[0].default_database[0].primary_access_key != null ? azurerm_managed_redis.tfe[0].default_database[0].primary_access_key : "", "") : azurerm_redis_cache.tfe[0].primary_access_key
     ) : ""
     tfe_redis_requires_sidekiq_endpoint = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis
     tfe_redis_sidekiq_host              = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? "${local.redis_sidekiq_hostname}:${local.redis_managed_port}" : ""
     tfe_redis_sidekiq_use_auth          = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? var.tfe_redis_use_auth : ""
     tfe_redis_sidekiq_use_tls           = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? var.tfe_redis_use_tls : ""
-    tfe_redis_sidekiq_password          = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis && var.tfe_redis_use_auth ? try(azurerm_managed_redis.tfe_sidekiq[0].default_database[0].primary_access_key != null ? azurerm_managed_redis.tfe_sidekiq[0].default_database[0].primary_access_key : "", "") : ""
+    tfe_redis_sidekiq_password          = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis && var.tfe_redis_use_auth && !var.tfe_redis_passwordless_azure_use_msi ? try(azurerm_managed_redis.tfe_sidekiq[0].default_database[0].primary_access_key != null ? azurerm_managed_redis.tfe_sidekiq[0].default_database[0].primary_access_key : "", "") : ""
+
+    # Redis MSI passwordless auth settings (legacy Azure Cache for Redis only).
+    # See https://developer.hashicorp.com/terraform/enterprise/deploy/configuration/storage/connect-redis#azure-msi
+    tfe_redis_passwordless_azure_use_msi         = var.tfe_operational_mode == "active-active" && !local.tfe_redis_uses_managed_redis ? var.tfe_redis_passwordless_azure_use_msi : false
+    tfe_redis_passwordless_azure_client_id       = var.tfe_operational_mode == "active-active" && !local.tfe_redis_uses_managed_redis && var.tfe_redis_passwordless_azure_use_msi ? azurerm_user_assigned_identity.tfe.client_id : ""
+    tfe_redis_user                               = var.tfe_operational_mode == "active-active" && !local.tfe_redis_uses_managed_redis && var.tfe_redis_passwordless_azure_use_msi ? azurerm_user_assigned_identity.tfe.principal_id : ""
+    tfe_redis_sidekiq_passwordless_azure_use_msi = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis ? false : var.tfe_operational_mode == "active-active" && var.tfe_redis_passwordless_azure_use_msi
+    tfe_redis_sidekiq_user                       = var.tfe_operational_mode == "active-active" && local.tfe_redis_uses_managed_redis && var.tfe_redis_passwordless_azure_use_msi ? azurerm_user_assigned_identity.tfe.principal_id : ""
 
     # TLS settings
     tfe_tls_cert_file           = "/etc/ssl/private/terraform-enterprise/cert.pem"
@@ -313,7 +323,18 @@ resource "azurerm_linux_virtual_machine_scale_set" "tfe" {
       name                                   = "internal"
       primary                                = true
       subnet_id                              = var.vm_subnet_id
-      load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.tfe_servers[0].id]
+      load_balancer_backend_address_pool_ids = var.create_lb ? [azurerm_lb_backend_address_pool.tfe_servers[0].id] : []
+    }
+
+    dynamic "ip_configuration" {
+      for_each = var.create_lb && var.create_tfe_secondary_public_endpoint ? [1] : []
+
+      content {
+        name                                   = "secondary"
+        primary                                = false
+        subnet_id                              = var.vm_subnet_id
+        load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.tfe_servers_secondary[0].id]
+      }
     }
   }
 
