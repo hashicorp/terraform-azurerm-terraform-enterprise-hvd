@@ -138,6 +138,17 @@ function retrieve_certs_from_key_vault {
   az keyvault secret show --id "$TFE_TLS_PRIVKEY_KEYVAULT_SECRET_ID" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/key.pem
   log "INFO" "Retrieving TLS CA bundle '$TFE_TLS_CA_BUNDLE_KEYVAULT_SECRET_ID' from Key Vault."
   az keyvault secret show --id "$TFE_TLS_CA_BUNDLE_KEYVAULT_SECRET_ID" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/bundle.pem
+
+  if [[ -n "${tfe_hostname_secondary}" ]]; then
+    log "INFO" "Retrieving secondary TLS certificate '${tfe_tls_cert_keyvault_secret_id_secondary}' from Key Vault."
+    az keyvault secret show --id "${tfe_tls_cert_keyvault_secret_id_secondary}" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/cert-secondary.pem
+    log "INFO" "Retrieving secondary TLS private key '${tfe_tls_privkey_keyvault_secret_id_secondary}' from Key Vault."
+    az keyvault secret show --id "${tfe_tls_privkey_keyvault_secret_id_secondary}" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/key-secondary.pem
+    log "INFO" "Retrieving secondary TLS CA bundle '${tfe_tls_ca_bundle_keyvault_secret_id_secondary}' from Key Vault."
+    az keyvault secret show --id "${tfe_tls_ca_bundle_keyvault_secret_id_secondary}" --query value --output tsv | base64 -d > $TFE_TLS_CERTS_DIR/bundle-secondary.pem
+    printf "\n" >> $TFE_TLS_CERTS_DIR/bundle.pem
+    cat $TFE_TLS_CERTS_DIR/bundle-secondary.pem >> $TFE_TLS_CERTS_DIR/bundle.pem
+  fi
 }
 
 function retrieve_license_from_key_vault {
@@ -193,6 +204,12 @@ services:
 %{ if tfe_admin_console_disabled ~}
       TFE_ADMIN_CONSOLE_DISABLED: "true"
 %{ endif ~}
+%{ if tfe_hostname_secondary != "" ~}
+      TFE_HOSTNAME_SECONDARY: ${tfe_hostname_secondary}
+      TFE_OIDC_HOSTNAME_CHOICE: ${tfe_oidc_hostname_choice}
+      TFE_VCS_HOSTNAME_CHOICE: ${tfe_vcs_hostname_choice}
+      TFE_RUN_TASK_HOSTNAME_CHOICE: ${tfe_run_task_hostname_choice}
+%{ endif ~}
 
       # Database settings
       TFE_DATABASE_HOST: ${tfe_database_host}
@@ -229,11 +246,20 @@ services:
       TFE_REDIS_USE_TLS: ${tfe_redis_use_tls}
       TFE_REDIS_USE_AUTH: ${tfe_redis_use_auth}
       TFE_REDIS_PASSWORD: ${tfe_redis_password}
+%{ if tfe_redis_passwordless_azure_use_msi ~}
+      TFE_REDIS_PASSWORDLESS_AZURE_USE_MSI: ${tfe_redis_passwordless_azure_use_msi}
+      TFE_REDIS_PASSWORDLESS_AZURE_CLIENT_ID: ${tfe_redis_passwordless_azure_client_id}
+      TFE_REDIS_USER: ${tfe_redis_user}
+%{ endif ~}
 %{ if tfe_redis_requires_sidekiq_endpoint ~}
       TFE_REDIS_SIDEKIQ_HOST: ${tfe_redis_sidekiq_host}
       TFE_REDIS_SIDEKIQ_USE_TLS: ${tfe_redis_sidekiq_use_tls}
       TFE_REDIS_SIDEKIQ_USE_AUTH: ${tfe_redis_sidekiq_use_auth}
       TFE_REDIS_SIDEKIQ_PASSWORD: ${tfe_redis_sidekiq_password}
+%{ if tfe_redis_sidekiq_passwordless_azure_use_msi ~}
+      TFE_REDIS_SIDEKIQ_PASSWORDLESS_AZURE_USE_MSI: ${tfe_redis_sidekiq_passwordless_azure_use_msi}
+      TFE_REDIS_SIDEKIQ_USER: ${tfe_redis_sidekiq_user}
+%{ endif ~}
 %{ endif ~}
 %{ endif ~}
 
@@ -241,6 +267,10 @@ services:
       TFE_TLS_CERT_FILE: ${tfe_tls_cert_file}
       TFE_TLS_KEY_FILE: ${tfe_tls_key_file}
       TFE_TLS_CA_BUNDLE_FILE: ${tfe_tls_ca_bundle_file}
+%{ if tfe_hostname_secondary != "" ~}
+      TFE_TLS_CERT_FILE_SECONDARY: ${tfe_tls_cert_file_secondary}
+      TFE_TLS_KEY_FILE_SECONDARY: ${tfe_tls_key_file_secondary}
+%{ endif ~}
       TFE_TLS_CIPHERS: ${tfe_tls_ciphers}
       TFE_TLS_ENFORCE: ${tfe_tls_enforce}
       TFE_TLS_VERSION: ${tfe_tls_version}
@@ -269,6 +299,9 @@ services:
 %{ if tfe_hairpin_addressing ~}
     extra_hosts:
       - ${tfe_hostname}:$VM_PRIVATE_IP
+%{ if tfe_hostname_secondary != "" ~}
+      - ${tfe_hostname_secondary}:$VM_PRIVATE_IP
+%{ endif ~}
 %{ endif ~}
     cap_add:
       - IPC_LOCK
@@ -328,6 +361,9 @@ spec:
     - ip: $VM_PRIVATE_IP
       hostnames:
         - "${tfe_hostname}"
+%{ if tfe_hostname_secondary != "" ~}
+        - "${tfe_hostname_secondary}"
+%{ endif ~}
 %{ endif ~}
   containers:
   - env:
@@ -367,6 +403,16 @@ spec:
 %{ if tfe_admin_console_disabled ~}
     - name: "TFE_ADMIN_CONSOLE_DISABLED"
       value: "true"
+%{ endif ~}
+%{ if tfe_hostname_secondary != "" ~}
+    - name: "TFE_HOSTNAME_SECONDARY"
+      value: ${tfe_hostname_secondary}
+    - name: "TFE_OIDC_HOSTNAME_CHOICE"
+      value: ${tfe_oidc_hostname_choice}
+    - name: "TFE_VCS_HOSTNAME_CHOICE"
+      value: ${tfe_vcs_hostname_choice}
+    - name: "TFE_RUN_TASK_HOSTNAME_CHOICE"
+      value: ${tfe_run_task_hostname_choice}
 %{ endif ~}
 
     # Database settings
@@ -422,6 +468,14 @@ spec:
       value: ${tfe_redis_use_auth}
     - name: "TFE_REDIS_USE_TLS"
       value: ${tfe_redis_use_tls}
+%{ if tfe_redis_passwordless_azure_use_msi ~}
+    - name: "TFE_REDIS_PASSWORDLESS_AZURE_USE_MSI"
+      value: ${tfe_redis_passwordless_azure_use_msi}
+    - name: "TFE_REDIS_PASSWORDLESS_AZURE_CLIENT_ID"
+      value: ${tfe_redis_passwordless_azure_client_id}
+    - name: "TFE_REDIS_USER"
+      value: ${tfe_redis_user}
+%{ endif ~}
 %{ if tfe_redis_requires_sidekiq_endpoint ~}
     - name: "TFE_REDIS_SIDEKIQ_HOST"
       value: ${tfe_redis_sidekiq_host}
@@ -431,6 +485,12 @@ spec:
       value: ${tfe_redis_sidekiq_use_auth}
     - name: "TFE_REDIS_SIDEKIQ_USE_TLS"
       value: ${tfe_redis_sidekiq_use_tls}
+%{ if tfe_redis_sidekiq_passwordless_azure_use_msi ~}
+    - name: "TFE_REDIS_SIDEKIQ_PASSWORDLESS_AZURE_USE_MSI"
+      value: ${tfe_redis_sidekiq_passwordless_azure_use_msi}
+    - name: "TFE_REDIS_SIDEKIQ_USER"
+      value: ${tfe_redis_sidekiq_user}
+%{ endif ~}
 %{ endif ~}
 
     # Vault cluster settings
@@ -445,6 +505,12 @@ spec:
       value: ${tfe_tls_key_file}
     - name: "TFE_TLS_CA_BUNDLE_FILE"
       value: ${tfe_tls_ca_bundle_file}
+%{ if tfe_hostname_secondary != "" ~}
+    - name: "TFE_TLS_CERT_FILE_SECONDARY"
+      value: ${tfe_tls_cert_file_secondary}
+    - name: "TFE_TLS_KEY_FILE_SECONDARY"
+      value: ${tfe_tls_key_file_secondary}
+%{ endif ~}
     - name: "TFE_TLS_CIPHERS"
       value: ${tfe_tls_ciphers}
     - name: "TFE_TLS_ENFORCE"
