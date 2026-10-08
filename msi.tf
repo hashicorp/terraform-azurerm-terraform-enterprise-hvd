@@ -56,6 +56,19 @@ resource "azurerm_role_assignment" "tfe_sa_owner" {
   principal_id         = azurerm_user_assigned_identity.tfe.principal_id
 }
 
+resource "azurerm_role_assignment" "tfe_redis_contributor" {
+  # Required for MSI passwordless auth to Azure Cache for Redis.
+  # The "Redis Cache Contributor" role allows the managed identity to
+  # authenticate via Microsoft Entra ID instead of using a static access key.
+  # Only created for the legacy Redis Cache path (calver image tags); the
+  # Managed Redis path uses access key auth exclusively.
+  count = var.tfe_operational_mode == "active-active" && var.tfe_redis_passwordless_azure_use_msi && !local.tfe_redis_uses_managed_redis ? 1 : 0
+
+  scope                = azurerm_redis_cache.tfe[0].id
+  role_definition_name = "Redis Cache Contributor"
+  principal_id         = azurerm_user_assigned_identity.tfe.principal_id
+}
+
 #------------------------------------------------------------------------------
 # PostgreSQL flexible server user-assigned identity
 #------------------------------------------------------------------------------

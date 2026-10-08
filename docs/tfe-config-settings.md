@@ -35,3 +35,16 @@ The module derives the Redis topology from `tfe_image_tag` as well:
 - Semver releases `>= 1.0.1` switch to Azure Managed Redis and render separate Redis endpoints for the main application and Sidekiq because Azure Managed Redis does not support numbered databases.
 
 When the Managed Redis path is active, the generated runtime configuration includes both the standard `TFE_REDIS_*` settings and the matching `TFE_REDIS_SIDEKIQ_*` settings.
+
+## Secondary hostname support
+
+This module can also render the TFE secondary-hostname settings when `tfe_hostname_secondary` is set. The bootstrap template writes the following configuration values into the runtime manifest for Docker and Podman:
+
+- `TFE_HOSTNAME_SECONDARY`
+- `TFE_OIDC_HOSTNAME_CHOICE`
+- `TFE_VCS_HOSTNAME_CHOICE`
+- `TFE_RUN_TASK_HOSTNAME_CHOICE`
+- `TFE_TLS_CERT_FILE_SECONDARY`
+- `TFE_TLS_KEY_FILE_SECONDARY`
+
+The secondary certificate, private key, and CA bundle are retrieved from Azure Key Vault using the `*_secondary` secret ID inputs and the secondary CA bundle is appended to the primary bundle so both trust chains are available to TFE.
