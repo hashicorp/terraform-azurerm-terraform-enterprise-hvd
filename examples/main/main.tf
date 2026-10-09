@@ -57,6 +57,7 @@ module "tfe" {
   tfe_admin_console_disabled           = var.tfe_admin_console_disabled
   cidr_allow_ingress_tfe_admin_console = var.cidr_allow_ingress_tfe_admin_console
   tfe_operational_mode                 = var.tfe_operational_mode
+  tfe_explorer_enabled                 = var.tfe_explorer_enabled
 
   # --- Networking --- #
   vnet_id         = var.vnet_id
@@ -87,14 +88,19 @@ module "tfe" {
   vm_admin_username   = var.vm_admin_username
 
   # --- Database --- #
-  tfe_database_password_keyvault_secret_name = var.tfe_database_password_keyvault_secret_name
-  tfe_database_name                          = var.tfe_database_name
-  tfe_database_parameters                    = var.tfe_database_parameters
-  postgres_enable_high_availability          = var.postgres_enable_high_availability
-  postgres_geo_redundant_backup_enabled      = var.postgres_geo_redundant_backup_enabled
-  postgres_administrator_login               = var.postgres_administrator_login
-  postgres_version                           = var.postgres_version
-  postgres_sku                               = var.postgres_sku
+  tfe_database_password_keyvault_secret_name        = var.tfe_database_password_keyvault_secret_name
+  tfe_database_name                                 = var.tfe_database_name
+  tfe_database_parameters                           = var.tfe_database_parameters
+  tfe_explorer_database_host                        = var.tfe_explorer_database_host
+  tfe_explorer_database_name                        = var.tfe_explorer_database_name
+  tfe_explorer_database_user                        = var.tfe_explorer_database_user
+  tfe_explorer_database_password_keyvault_secret_id = var.tfe_explorer_database_password_keyvault_secret_id
+  tfe_explorer_database_parameters                  = var.tfe_explorer_database_parameters
+  postgres_enable_high_availability                 = var.postgres_enable_high_availability
+  postgres_geo_redundant_backup_enabled             = var.postgres_geo_redundant_backup_enabled
+  postgres_administrator_login                      = var.postgres_administrator_login
+  postgres_version                                  = var.postgres_version
+  postgres_sku                                      = var.postgres_sku
 
   # --- Object storage --- #
   storage_account_ip_allow = var.storage_account_ip_allow

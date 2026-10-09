@@ -14,6 +14,11 @@ output "tfe_admin_console_url_pattern" {
   description = "URL pattern to access the TFE Admin Console when it is enabled."
 }
 
+output "tfe_explorer_database_warning" {
+  value       = var.tfe_explorer_enabled && local.tfe_explorer_uses_primary_database ? "Explorer is enabled and reuses the primary TFE PostgreSQL database. This fallback is intended for non-production use." : null
+  description = "Warning emitted when Explorer reuses the primary TFE database."
+}
+
 output "secondary_url" {
   value       = var.tfe_hostname_secondary != null ? "https://${var.tfe_hostname_secondary}" : null
   description = "URL of the optional secondary TFE hostname."
