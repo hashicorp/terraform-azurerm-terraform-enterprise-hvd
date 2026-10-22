@@ -1,3 +1,25 @@
+## v1.1.0
+
+## What's Changed
+* upstream merge template repository by @github-actions[bot] in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/29
+* Release 1.0.0 by @abuxton in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/28
+* [COMPLIANCE] Add/Update Copyright Headers by @hashicorp-copywrite[bot] in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/30
+* feat(custom_data): add stop_grace_period to tfe docker-compose service by @abuxton in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/33
+* feat(variables): add validation to tfe_image_tag variable by @abuxton in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/32
+* upstream merge template repository by @github-actions[bot] in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/34
+* [COMPLIANCE] Add/Update Copyright Headers by @hashicorp-copywrite[bot] in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/35
+* fix: cap azurerm provider version below 5.0 to prevent breaking changes by @minsikl in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/37
+* Updated the RBAC implementation to include new roles and permissions … by @tagangawilliams in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/38
+* feat: add secondary hostname support by @abuxton in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/24
+* feat: add explorer database support by @abuxton in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/23
+
+## New Contributors
+* @hashicorp-copywrite[bot] made their first contribution in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/30
+* @minsikl made their first contribution in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/37
+* @tagangawilliams made their first contribution in https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/pull/38
+
+**Full Changelog**: https://github.com/hashicorp/terraform-azurerm-terraform-enterprise-hvd/compare/1.0.0...1.1.0
+
 ## v1.0.0
 
 ## What's Changed
